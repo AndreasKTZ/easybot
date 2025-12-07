@@ -104,8 +104,22 @@ Du kan hjælpe med følgende emner: ${scopeList}.${knowledgeSection}
     
     console.log("Final system prompt:", systemPrompt.substring(0, 100) + "...")
 
+    // Håndter både simpelt format (role/content) og AI SDK format (role/parts)
+    // Simpelt format bruges af dashboard preview, AI SDK format bruges af widget
+    const normalizedMessages = messages.map((msg: { role: string; content?: string; parts?: Array<{ type: string; text?: string }> }) => {
+      // Hvis beskeden allerede har parts (AI SDK format), behold den
+      if (msg.parts) {
+        return msg
+      }
+      // Ellers konverter fra simpelt format til AI SDK format
+      return {
+        role: msg.role,
+        parts: [{ type: "text", text: msg.content || "" }],
+      }
+    })
+
     // Konverter UIMessage[] til ModelMessage[] format
-    const modelMessages = convertToModelMessages(messages)
+    const modelMessages = convertToModelMessages(normalizedMessages)
 
     const result = streamText({
       model: google("gemini-2.5-flash"),

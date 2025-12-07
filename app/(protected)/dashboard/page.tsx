@@ -160,15 +160,15 @@ export default function DashboardPage() {
 
         {/* Test chat */}
         <Card className="flex h-[500px] flex-col overflow-hidden">
-          <CardHeader className="pb-0">
+          <CardHeader className="shrink-0 pb-0">
             <CardTitle className="text-base">Test din agent</CardTitle>
             <CardDescription>Prøv at chatte med {currentAgent.agent_name}</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 p-0">
+          <CardContent className="flex min-h-0 flex-1 flex-col p-0">
             <ChatWidget
               agentId={currentAgent.id}
               agentName={currentAgent.agent_name}
-              className="h-full"
+              className="min-h-0 flex-1"
             />
           </CardContent>
         </Card>

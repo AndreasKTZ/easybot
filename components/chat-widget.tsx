@@ -1,11 +1,47 @@
 "use client"
 
-import { useRef, useEffect, useState, useCallback } from "react"
+import { useRef, useEffect, useState, useCallback, useMemo } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { SentIcon, UserIcon, AiBrain01Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+
+// Simpel markdown-parsing for links
+function parseMessageContent(content: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = []
+  // Match markdown links: [text](url)
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+  let lastIndex = 0
+  let match
+
+  while ((match = linkRegex.exec(content)) !== null) {
+    // Tilføj tekst før linket
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index))
+    }
+    // Tilføj linket som et anchor element
+    parts.push(
+      <a
+        key={match.index}
+        href={match[2]}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline hover:no-underline"
+      >
+        {match[1]}
+      </a>
+    )
+    lastIndex = match.index + match[0].length
+  }
+
+  // Tilføj resterende tekst
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex))
+  }
+
+  return parts.length > 0 ? parts : [content]
+}
 
 type Message = {
   id: string
@@ -58,7 +94,7 @@ export function ChatWidget({ agentId, agentName = "Assistent", className }: Chat
 
       if (!response.ok) throw new Error("Chat request failed")
 
-      // Stream response
+      // Stream response - parse AI SDK streaming format
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let assistantContent = ""
@@ -71,17 +107,38 @@ export function ChatWidget({ agentId, agentName = "Assistent", className }: Chat
       ])
 
       if (reader) {
+        let buffer = ""
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
-          const chunk = decoder.decode(value)
-          assistantContent += chunk
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId ? { ...m, content: assistantContent } : m
-            )
-          )
+          buffer += decoder.decode(value, { stream: true })
+          
+          // Parse linjer fra bufferen
+          const lines = buffer.split("\n")
+          buffer = lines.pop() || "" // Behold ufærdig linje i buffer
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue
+            
+            const jsonStr = line.slice(6) // Fjern "data: " prefix
+            if (!jsonStr || jsonStr === "[DONE]") continue
+
+            try {
+              const data = JSON.parse(jsonStr)
+              // Håndter text-delta events
+              if (data.type === "text-delta" && data.delta) {
+                assistantContent += data.delta
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId ? { ...m, content: assistantContent } : m
+                  )
+                )
+              }
+            } catch {
+              // Ignorer parse fejl
+            }
+          }
         }
       }
     } catch (error) {
@@ -105,9 +162,9 @@ export function ChatWidget({ agentId, agentName = "Assistent", className }: Chat
   }
 
   return (
-    <div className={cn("flex h-full flex-col", className)}>
+    <div className={cn("flex flex-col overflow-hidden", className)}>
       {/* Chat header */}
-      <div className="flex items-center gap-3 border-b p-4">
+      <div className="flex shrink-0 items-center gap-3 border-b p-4">
         <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <HugeiconsIcon icon={AiBrain01Icon} size={20} />
         </div>
@@ -120,7 +177,7 @@ export function ChatWidget({ agentId, agentName = "Assistent", className }: Chat
       {/* Chat messages */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="min-h-0 flex-1 overflow-y-auto p-4 space-y-4"
       >
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center text-center text-muted-foreground">
@@ -157,7 +214,11 @@ export function ChatWidget({ agentId, agentName = "Assistent", className }: Chat
                   : "bg-muted"
               )}
             >
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {message.role === "assistant" 
+                  ? parseMessageContent(message.content) 
+                  : message.content}
+              </p>
             </div>
           </div>
         ))}
@@ -179,7 +240,7 @@ export function ChatWidget({ agentId, agentName = "Assistent", className }: Chat
       </div>
 
       {/* Chat input */}
-      <form onSubmit={handleSubmit} className="border-t p-4">
+      <form onSubmit={handleSubmit} className="shrink-0 border-t p-4">
         <div className="flex gap-2">
           <Input
             value={input}
