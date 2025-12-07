@@ -50,8 +50,8 @@ export async function PATCH(
     }
 
     // Tjek at brugeren ejer agenten
-    const { data: existingAgent } = await supabase
-      .from("agents")
+    const { data: existingAgent } = await (supabase
+      .from("agents") as any)
       .select("user_id")
       .eq("id", id)
       .single()
@@ -62,8 +62,8 @@ export async function PATCH(
 
     const body = await request.json()
 
-    const { data: agent, error } = await supabase
-      .from("agents")
+    const { data: agent, error } = await (supabase
+      .from("agents") as any)
       .update({
         ...(body.business_name && { business_name: body.business_name }),
         ...(body.agent_name && { agent_name: body.agent_name }),

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useMemo, FormEvent } from "react"
+import { Suspense, useEffect, useRef, useState, useMemo, FormEvent } from "react"
 import { useSearchParams } from "next/navigation"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
@@ -39,8 +39,21 @@ const defaultBranding = {
 
 type AgentBranding = typeof defaultBranding
 
-// Chat UI til iframe widget
-export default function WidgetChatPage() {
+// Loading fallback
+function ChatLoading() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-white">
+      <div className="flex gap-1">
+        <span className="size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+        <span className="size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+        <span className="size-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+      </div>
+    </div>
+  )
+}
+
+// Chat content component der bruger useSearchParams
+function WidgetChatContent() {
   const searchParams = useSearchParams()
   const agentId = searchParams.get("agent")
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -240,5 +253,14 @@ export default function WidgetChatPage() {
         </p>
       </form>
     </div>
+  )
+}
+
+// Page component med Suspense boundary
+export default function WidgetChatPage() {
+  return (
+    <Suspense fallback={<ChatLoading />}>
+      <WidgetChatContent />
+    </Suspense>
   )
 }

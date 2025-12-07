@@ -10,8 +10,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { data, error } = await supabase
-    .from("agents")
+  const { data, error } = await (supabase
+    .from("agents") as any)
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -34,22 +34,24 @@ export async function POST(request: Request) {
 
   const body = await request.json()
 
-  const { data, error } = await supabase
-    .from("agents")
-    .insert({
-      user_id: user.id,
-      business_name: body.businessName,
-      agent_name: body.agentName,
-      primary_role: body.primaryRole,
-      scopes: body.scopes || [],
-      tone: body.tone || "friendly",
-      branding: body.branding || {
-        primary_color: "#0d9488",
-        icon_id: "ai-brain",
-        icon_style: "bulk",
-        logo_url: null,
-      },
-    })
+  const insertData = {
+    user_id: user.id,
+    business_name: body.businessName as string,
+    agent_name: body.agentName as string,
+    primary_role: body.primaryRole as string,
+    scopes: body.scopes || [],
+    tone: body.tone || "friendly",
+    branding: body.branding || {
+      primary_color: "#0d9488",
+      icon_id: "ai-brain",
+      icon_style: "bulk",
+      logo_url: null,
+    },
+  }
+
+  const { data, error } = await (supabase
+    .from("agents") as any)
+    .insert(insertData)
     .select()
     .single()
 

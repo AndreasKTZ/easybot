@@ -27,8 +27,9 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 })
   }
 
-  const { data, error } = await supabase
-    .from("knowledge_links")
+  // Note: knowledge_links table skal oprettes i Supabase
+  const { data, error } = await (supabase
+    .from("knowledge_links") as any)
     .select("*")
     .eq("agent_id", agentId)
     .order("created_at", { ascending: false })
@@ -64,13 +65,16 @@ export async function POST(request: Request, { params }: Params) {
 
   const body = await request.json()
 
-  const { data, error } = await supabase
-    .from("knowledge_links")
-    .insert({
-      agent_id: agentId,
-      label: body.label,
-      url: body.url,
-    })
+  const insertData = {
+    agent_id: agentId,
+    label: body.label as string,
+    url: body.url as string,
+  }
+
+  // Note: knowledge_links table skal oprettes i Supabase
+  const { data, error } = await (supabase
+    .from("knowledge_links") as any)
+    .insert(insertData)
     .select()
     .single()
 
@@ -110,8 +114,9 @@ export async function DELETE(request: Request, { params }: Params) {
     return NextResponse.json({ error: "linkId required" }, { status: 400 })
   }
 
-  const { error } = await supabase
-    .from("knowledge_links")
+  // Note: knowledge_links table skal oprettes i Supabase
+  const { error } = await (supabase
+    .from("knowledge_links") as any)
     .delete()
     .eq("id", linkId)
     .eq("agent_id", agentId)
