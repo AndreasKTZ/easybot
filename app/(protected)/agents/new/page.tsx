@@ -74,10 +74,10 @@ export default function NewAgentPage() {
   const [links, setLinks] = useState<WizardKnowledgeLink[]>([])
   const [documents, setDocuments] = useState<WizardKnowledgeDocument[]>([])
 
-  const canProceed = () => {
+  const canProceed = (): boolean => {
     switch (currentStep) {
       case 0:
-        return businessName.trim() && agentName.trim() && primaryRole
+        return !!(businessName.trim() && agentName.trim() && primaryRole)
       case 1:
         return scopes.length > 0
       case 2:
