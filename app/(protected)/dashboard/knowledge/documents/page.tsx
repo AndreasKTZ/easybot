@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { File02Icon, Delete01Icon, Upload01Icon, FileEditIcon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
@@ -11,14 +11,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
-import { type KnowledgeDocument } from "@/lib/mock-data"
+import type { KnowledgeDocument } from "@/lib/supabase/types"
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 export default function DocumentsPage() {
   const { currentAgent } = useAgent()
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>(
-    currentAgent?.knowledgeDocuments ?? []
-  )
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchDocuments = useCallback(async () => {
+    if (!currentAgent) return
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/documents`)
+      if (res.ok) {
+        const data = await res.json()
+        setDocuments(data)
+      }
+    } catch (err) {
+      console.error("Kunne ikke hente dokumenter:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentAgent])
+
+  useEffect(() => {
+    fetchDocuments()
+  }, [fetchDocuments])
 
   if (!currentAgent) {
     return (
@@ -28,18 +54,44 @@ export default function DocumentsPage() {
     )
   }
 
-  const handleFakeUpload = () => {
-    const fakeDoc: KnowledgeDocument = {
-      id: `doc-${Date.now()}`,
-      name: `Dokument-${documents.length + 1}.pdf`,
-      type: "PDF",
-      size: `${(Math.random() * 3 + 0.5).toFixed(1)} MB`,
+  const handleFakeUpload = async () => {
+    // Demo: Opret dokument metadata (ingen reel fil upload)
+    const fakeName = `Dokument-${documents.length + 1}.pdf`
+    const fakeSize = Math.floor(Math.random() * 3000000 + 500000) // 0.5-3.5 MB
+
+    try {
+      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/documents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fakeName,
+          fileType: "PDF",
+          fileSize: fakeSize,
+        }),
+      })
+
+      if (res.ok) {
+        const newDoc = await res.json()
+        setDocuments([newDoc, ...documents])
+      }
+    } catch (err) {
+      console.error("Kunne ikke uploade dokument:", err)
     }
-    setDocuments([...documents, fakeDoc])
   }
 
-  const removeDocument = (id: string) => {
-    setDocuments(documents.filter((doc) => doc.id !== id))
+  const removeDocument = async (id: string) => {
+    try {
+      const res = await fetch(
+        `/api/agents/${currentAgent.id}/knowledge/documents?documentId=${id}`,
+        { method: "DELETE" }
+      )
+
+      if (res.ok) {
+        setDocuments(documents.filter((doc) => doc.id !== id))
+      }
+    } catch (err) {
+      console.error("Kunne ikke fjerne dokument:", err)
+    }
   }
 
   return (
@@ -63,6 +115,14 @@ export default function DocumentsPage() {
             <div
               className="flex flex-col items-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors hover:border-primary/50 hover:bg-accent/50 cursor-pointer"
               onClick={handleFakeUpload}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  handleFakeUpload()
+                }
+              }}
             >
               <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
                 <HugeiconsIcon icon={Upload01Icon} size={24} className="text-primary" />
@@ -89,7 +149,21 @@ export default function DocumentsPage() {
         <h3 className="mb-4 font-medium">
           Uploadede dokumenter ({documents.length})
         </h3>
-        {documents.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardContent className="flex items-center gap-4 py-4">
+                  <Skeleton className="size-10 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : documents.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center gap-2 py-8">
               <HugeiconsIcon icon={FileEditIcon} size={32} className="text-muted-foreground" />
@@ -109,7 +183,7 @@ export default function DocumentsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium">{doc.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {doc.type} · {doc.size}
+                      {doc.file_type} · {formatFileSize(doc.file_size)}
                     </p>
                   </div>
                   <Button

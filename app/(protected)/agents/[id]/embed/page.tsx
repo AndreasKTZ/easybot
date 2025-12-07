@@ -26,7 +26,8 @@ export default function EmbedPage() {
     )
   }
 
-  const embedCode = `<script src="https://easybot.dk/widget.js/${currentAgent.id}"></script>`
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  const embedCode = `<script src="${siteUrl}/widget.js?agent=${currentAgent.id}"></script>`
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(embedCode)
@@ -144,6 +145,18 @@ export default function EmbedPage() {
                     />
                   </svg>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <Button variant="outline" asChild className="w-full">
+                  <a
+                    href={`${siteUrl}/widget/chat?agent=${currentAgent.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Åbn chat i nyt vindue
+                  </a>
+                </Button>
               </div>
             </CardContent>
           </Card>

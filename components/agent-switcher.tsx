@@ -21,12 +21,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { type Agent } from "@/lib/mock-data"
+import { type Agent } from "@/lib/supabase/types"
 
 type AgentSwitcherProps = {
   agents: Agent[]
   currentAgent: Agent | null
-  onAgentChange: (agent: Agent) => void
+  onAgentChange: (agent: Agent | null) => void
 }
 
 export function AgentSwitcher({
@@ -49,9 +49,9 @@ export function AgentSwitcher({
               <div className="flex flex-1 flex-col gap-0.5 leading-none">
                 {currentAgent ? (
                   <>
-                    <span className="font-semibold">{currentAgent.agentName}</span>
+                    <span className="font-semibold">{currentAgent.agent_name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {currentAgent.businessName}
+                      {currentAgent.business_name}
                     </span>
                   </>
                 ) : (
@@ -77,9 +77,9 @@ export function AgentSwitcher({
                   <HugeiconsIcon icon={AiBrain01Icon} size={14} />
                 </div>
                 <div className="flex flex-1 flex-col">
-                  <span className="font-medium">{agent.agentName}</span>
+                  <span className="font-medium">{agent.agent_name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {agent.businessName}
+                    {agent.business_name}
                   </span>
                 </div>
                 {currentAgent?.id === agent.id && (

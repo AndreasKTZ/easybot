@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Tick02Icon } from "@hugeicons-pro/core-bulk-rounded"
+import { Tick02Icon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -22,11 +22,24 @@ import {
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAgent } from "@/lib/agent-context"
-import {
-  type AgentScope,
-  scopeLabels,
-  primaryRoleOptions,
-} from "@/lib/mock-data"
+import type { AgentScope } from "@/lib/supabase/types"
+
+const scopeLabels: Record<AgentScope, string> = {
+  products: "Produkter og services",
+  subscriptions: "Abonnementer og priser",
+  orders: "Ordrer",
+  invoices: "Fakturaer og betaling",
+  support: "Teknisk support",
+  general: "Generelle spørgsmål",
+}
+
+const primaryRoleOptions = [
+  { value: "customer-support", label: "Kundeservice" },
+  { value: "sales", label: "Salg" },
+  { value: "onboarding", label: "Onboarding" },
+  { value: "technical-support", label: "Teknisk support" },
+  { value: "general", label: "Generel assistent" },
+]
 
 const scopeOptions: AgentScope[] = [
   "products",
@@ -38,18 +51,23 @@ const scopeOptions: AgentScope[] = [
 ]
 
 export default function InfoPage() {
-  const { currentAgent } = useAgent()
-  const [businessName, setBusinessName] = useState(
-    currentAgent?.businessName ?? ""
-  )
-  const [agentName, setAgentName] = useState(currentAgent?.agentName ?? "")
-  const [primaryRole, setPrimaryRole] = useState(
-    currentAgent?.primaryRole ?? ""
-  )
-  const [scopes, setScopes] = useState<AgentScope[]>(
-    currentAgent?.scopes ?? []
-  )
+  const { currentAgent, updateAgent } = useAgent()
+  const [businessName, setBusinessName] = useState("")
+  const [agentName, setAgentName] = useState("")
+  const [primaryRole, setPrimaryRole] = useState("")
+  const [scopes, setScopes] = useState<AgentScope[]>([])
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  // Sync state med currentAgent når den ændres
+  useEffect(() => {
+    if (currentAgent) {
+      setBusinessName(currentAgent.business_name)
+      setAgentName(currentAgent.agent_name)
+      setPrimaryRole(currentAgent.primary_role)
+      setScopes(currentAgent.scopes)
+    }
+  }, [currentAgent])
 
   if (!currentAgent) {
     return (
@@ -67,9 +85,24 @@ export default function InfoPage() {
     }
   }
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    if (saving) return
+    setSaving(true)
+    
+    try {
+      await updateAgent(currentAgent.id, {
+        businessName,
+        agentName,
+        primaryRole,
+        scopes,
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error("Kunne ikke gemme:", err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -97,6 +130,7 @@ export default function InfoPage() {
                   id="business-name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -105,12 +139,13 @@ export default function InfoPage() {
                   id="agent-name"
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
+                  disabled={saving}
                 />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="primary-role">Primær rolle</Label>
-              <Select value={primaryRole} onValueChange={setPrimaryRole}>
+              <Select value={primaryRole} onValueChange={setPrimaryRole} disabled={saving}>
                 <SelectTrigger id="primary-role">
                   <SelectValue placeholder="Vælg en rolle" />
                 </SelectTrigger>
@@ -144,6 +179,7 @@ export default function InfoPage() {
                     id={scope}
                     checked={scopes.includes(scope)}
                     onCheckedChange={() => toggleScope(scope)}
+                    disabled={saving}
                   />
                   <Label htmlFor={scope} className="cursor-pointer flex-1">
                     {scopeLabels[scope]}
@@ -154,8 +190,13 @@ export default function InfoPage() {
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} disabled={saved}>
-          {saved ? (
+        <Button onClick={handleSave} disabled={saving || saved}>
+          {saving ? (
+            <>
+              <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+              Gemmer...
+            </>
+          ) : saved ? (
             <>
               <HugeiconsIcon icon={Tick02Icon} size={16} className="mr-2" />
               Gemt!

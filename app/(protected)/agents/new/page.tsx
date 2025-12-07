@@ -14,12 +14,22 @@ import { BasicInfoStep } from "@/components/wizard/basic-info-step"
 import { ScopesStep } from "@/components/wizard/scopes-step"
 import { ToneStep } from "@/components/wizard/tone-step"
 import { KnowledgeStep } from "@/components/wizard/knowledge-step"
-import {
-  type AgentScope,
-  type AgentTone,
-  type KnowledgeLink,
-  type KnowledgeDocument,
-} from "@/lib/mock-data"
+import { useAgent } from "@/lib/agent-context"
+import type { AgentScope, AgentTone } from "@/lib/supabase/types"
+
+// Lokale typer til wizard
+type WizardKnowledgeLink = {
+  id: string
+  label: string
+  url: string
+}
+
+type WizardKnowledgeDocument = {
+  id: string
+  name: string
+  type: string
+  size: string
+}
 
 const wizardSteps: WizardStep[] = [
   {
@@ -50,7 +60,10 @@ const wizardSteps: WizardStep[] = [
 
 export default function NewAgentPage() {
   const router = useRouter()
+  const { createAgent } = useAgent()
   const [currentStep, setCurrentStep] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Form state
   const [businessName, setBusinessName] = useState("")
@@ -58,8 +71,8 @@ export default function NewAgentPage() {
   const [primaryRole, setPrimaryRole] = useState("")
   const [scopes, setScopes] = useState<AgentScope[]>([])
   const [tone, setTone] = useState<AgentTone | "">("")
-  const [links, setLinks] = useState<KnowledgeLink[]>([])
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>([])
+  const [links, setLinks] = useState<WizardKnowledgeLink[]>([])
+  const [documents, setDocuments] = useState<WizardKnowledgeDocument[]>([])
 
   const canProceed = () => {
     switch (currentStep) {
@@ -88,8 +101,39 @@ export default function NewAgentPage() {
     }
   }
 
-  const handleComplete = () => {
-    router.push("/dashboard")
+  const handleComplete = async () => {
+    if (isSubmitting) return
+    
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const agent = await createAgent({
+        businessName,
+        agentName,
+        primaryRole,
+        scopes,
+        tone: tone || "friendly",
+      })
+
+      // Tilføj knowledge links hvis der er nogen
+      if (links.length > 0) {
+        await Promise.all(
+          links.map((link) =>
+            fetch(`/api/agents/${agent.id}/knowledge/links`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ label: link.label, url: link.url }),
+            })
+          )
+        )
+      }
+
+      router.push("/dashboard")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke oprette agent")
+      setIsSubmitting(false)
+    }
   }
 
   const renderStep = () => {
@@ -111,12 +155,19 @@ export default function NewAgentPage() {
         return <ToneStep tone={tone} onToneChange={(t) => setTone(t)} />
       case 3:
         return (
-          <KnowledgeStep
-            links={links}
-            documents={documents}
-            onLinksChange={setLinks}
-            onDocumentsChange={setDocuments}
-          />
+          <>
+            {error && (
+              <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            <KnowledgeStep
+              links={links}
+              documents={documents}
+              onLinksChange={setLinks}
+              onDocumentsChange={setDocuments}
+            />
+          </>
         )
       default:
         return null
@@ -130,7 +181,8 @@ export default function NewAgentPage() {
       onNext={handleNext}
       onBack={handleBack}
       onComplete={handleComplete}
-      canProceed={canProceed()}
+      canProceed={canProceed() && !isSubmitting}
+      isSubmitting={isSubmitting}
     >
       {renderStep()}
     </WizardShell>

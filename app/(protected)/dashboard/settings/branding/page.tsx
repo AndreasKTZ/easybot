@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Tick02Icon,
   Upload01Icon,
   Image01Icon,
   Delete01Icon,
+  Loading03Icon,
   ChatBotIcon,
   BubbleChatSparkIcon,
   ArtificialIntelligence02Icon,
@@ -38,6 +39,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useAgent } from "@/lib/agent-context"
+import type { IconStyle } from "@/lib/supabase/types"
 
 const presetColors = [
   { name: "Teal", value: "#0d9488" },
@@ -51,27 +53,37 @@ const presetColors = [
 ]
 
 const iconOptions = [
-  { name: "AI Brain", bulk: AiBrain01Icon, solid: AiBrain01IconSolid },
-  { name: "Chatbot", bulk: ChatBotIcon, solid: ChatBotIconSolid },
-  { name: "Bubble Spark", bulk: BubbleChatSparkIcon, solid: BubbleChatSparkIconSolid },
-  { name: "AI", bulk: ArtificialIntelligence02Icon, solid: ArtificialIntelligence02IconSolid },
-  { name: "AI Magic", bulk: AiMagicIcon, solid: AiMagicIconSolid },
-  { name: "Support", bulk: CustomerSupportIcon, solid: CustomerSupportIconSolid },
-  { name: "Spørgsmål", bulk: BubbleChatQuestionIcon, solid: BubbleChatQuestionIconSolid },
-  { name: "Chat", bulk: BubbleChatIcon, solid: BubbleChatIconSolid },
+  { id: "ai-brain", name: "AI Brain", bulk: AiBrain01Icon, solid: AiBrain01IconSolid },
+  { id: "chatbot", name: "Chatbot", bulk: ChatBotIcon, solid: ChatBotIconSolid },
+  { id: "bubble-spark", name: "Bubble Spark", bulk: BubbleChatSparkIcon, solid: BubbleChatSparkIconSolid },
+  { id: "ai", name: "AI", bulk: ArtificialIntelligence02Icon, solid: ArtificialIntelligence02IconSolid },
+  { id: "ai-magic", name: "AI Magic", bulk: AiMagicIcon, solid: AiMagicIconSolid },
+  { id: "support", name: "Support", bulk: CustomerSupportIcon, solid: CustomerSupportIconSolid },
+  { id: "question", name: "Spørgsmål", bulk: BubbleChatQuestionIcon, solid: BubbleChatQuestionIconSolid },
+  { id: "chat", name: "Chat", bulk: BubbleChatIcon, solid: BubbleChatIconSolid },
 ]
 
-type IconStyle = "bulk" | "solid"
-
 export default function BrandingPage() {
-  const { currentAgent } = useAgent()
+  const { currentAgent, updateAgent } = useAgent()
   const [primaryColor, setPrimaryColor] = useState("#0d9488")
   const [customColor, setCustomColor] = useState("")
   const [logo, setLogo] = useState<string | null>(null)
   const [useIcon, setUseIcon] = useState(true)
-  const [selectedIcon, setSelectedIcon] = useState(0)
+  const [selectedIconId, setSelectedIconId] = useState("ai-brain")
   const [iconStyle, setIconStyle] = useState<IconStyle>("bulk")
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  // Sync state med currentAgent når den ændres
+  useEffect(() => {
+    if (currentAgent?.branding) {
+      setPrimaryColor(currentAgent.branding.primary_color)
+      setSelectedIconId(currentAgent.branding.icon_id)
+      setIconStyle(currentAgent.branding.icon_style)
+      setLogo(currentAgent.branding.logo_url)
+      setUseIcon(!currentAgent.branding.logo_url)
+    }
+  }, [currentAgent])
 
   if (!currentAgent) {
     return (
@@ -81,9 +93,26 @@ export default function BrandingPage() {
     )
   }
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    if (saving) return
+    setSaving(true)
+    
+    try {
+      await updateAgent(currentAgent.id, {
+        branding: {
+          primary_color: primaryColor,
+          icon_id: selectedIconId,
+          icon_style: iconStyle,
+          logo_url: useIcon ? null : logo,
+        },
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error("Kunne ikke gemme:", err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleLogoUpload = () => {
@@ -96,9 +125,8 @@ export default function BrandingPage() {
     setUseIcon(true)
   }
 
-  const CurrentIcon = iconStyle === "solid" 
-    ? iconOptions[selectedIcon].solid 
-    : iconOptions[selectedIcon].bulk
+  const selectedIcon = iconOptions.find((opt) => opt.id === selectedIconId) || iconOptions[0]
+  const CurrentIcon = iconStyle === "solid" ? selectedIcon.solid : selectedIcon.bulk
 
   return (
     <div className="flex flex-col gap-6 py-6">
@@ -184,17 +212,17 @@ export default function BrandingPage() {
             <div>
               <Label className="mb-3 block text-sm">Vælg ikon</Label>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-                {iconOptions.map((option, index) => (
+                {iconOptions.map((option) => (
                   <button
-                    key={option.name}
+                    key={option.id}
                     type="button"
                     onClick={() => {
-                      setSelectedIcon(index)
+                      setSelectedIconId(option.id)
                       setUseIcon(true)
                     }}
                     className={cn(
                       "group flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:border-primary/50 hover:bg-muted/50",
-                      selectedIcon === index && useIcon
+                      selectedIconId === option.id && useIcon
                         ? "border-primary bg-primary/5"
                         : "border-transparent bg-muted/30"
                     )}
@@ -203,7 +231,7 @@ export default function BrandingPage() {
                     <div
                       className={cn(
                         "flex size-10 items-center justify-center rounded-lg transition-colors",
-                        selectedIcon === index && useIcon
+                        selectedIconId === option.id && useIcon
                           ? "bg-primary text-white"
                           : "bg-muted text-muted-foreground group-hover:text-foreground"
                       )}
@@ -359,8 +387,13 @@ export default function BrandingPage() {
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} disabled={saved}>
-          {saved ? (
+        <Button onClick={handleSave} disabled={saving || saved}>
+          {saving ? (
+            <>
+              <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+              Gemmer...
+            </>
+          ) : saved ? (
             <>
               <HugeiconsIcon icon={Tick02Icon} size={16} className="mr-2" />
               Gemt!

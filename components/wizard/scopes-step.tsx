@@ -11,7 +11,16 @@ import {
   Tick02Icon,
 } from "@hugeicons-pro/core-bulk-rounded"
 import { cn } from "@/lib/utils"
-import { type AgentScope, scopeLabels } from "@/lib/mock-data"
+import type { AgentScope } from "@/lib/supabase/types"
+
+const scopeLabels: Record<AgentScope, string> = {
+  products: "Produkter og services",
+  subscriptions: "Abonnementer og priser",
+  orders: "Ordrer",
+  invoices: "Fakturaer og betaling",
+  support: "Teknisk support",
+  general: "Generelle spørgsmål",
+}
 
 const scopeConfig: {
   scope: AgentScope

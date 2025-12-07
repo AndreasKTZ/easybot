@@ -9,7 +9,6 @@ import {
   Link01Icon,
   Message01Icon,
   AiBrain01Icon,
-  SentIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,12 +19,45 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
-import { scopeLabels, toneLabels } from "@/lib/mock-data"
+import { ChatWidget } from "@/components/chat-widget"
+
+// Scope og tone labels
+const scopeLabels: Record<string, string> = {
+  products: "Produkter og services",
+  subscriptions: "Abonnementer og priser",
+  orders: "Ordrer",
+  invoices: "Fakturaer og betaling",
+  support: "Teknisk support",
+  general: "Generelle spørgsmål",
+}
+
+const toneLabels: Record<string, string> = {
+  friendly: "Venlig og uformel",
+  professional: "Rolig og professionel",
+  direct: "Kort og direkte",
+  educational: "Forklarende og pædagogisk",
+}
 
 export default function DashboardPage() {
-  const { currentAgent } = useAgent()
+  const { currentAgent, loading } = useAgent()
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6 py-6">
+        <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="size-14 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!currentAgent) {
     return (
@@ -48,19 +80,19 @@ export default function DashboardPage() {
     },
     {
       title: "Links",
-      description: `${currentAgent.knowledgeLinks.length} links tilføjet`,
+      description: "Administrer vidensbase-links",
       icon: Link01Icon,
       href: "/dashboard/knowledge/links",
     },
     {
       title: "Dokumenter",
-      description: `${currentAgent.knowledgeDocuments.length} dokumenter`,
+      description: "Upload dokumenter",
       icon: File02Icon,
       href: "/dashboard/knowledge/documents",
     },
     {
       title: "Tone",
-      description: toneLabels[currentAgent.tone],
+      description: toneLabels[currentAgent.tone] || "Ikke sat",
       icon: Message01Icon,
       href: "/dashboard/settings/tone",
     },
@@ -76,9 +108,9 @@ export default function DashboardPage() {
           </div>
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">
-              {currentAgent.agentName}
+              {currentAgent.agent_name}
             </h2>
-            <p className="text-muted-foreground">{currentAgent.businessName}</p>
+            <p className="text-muted-foreground">{currentAgent.business_name}</p>
           </div>
         </div>
         <Button asChild>
@@ -119,7 +151,7 @@ export default function DashboardPage() {
             <div className="flex flex-wrap gap-2">
               {currentAgent.scopes.map((scope) => (
                 <Badge key={scope} variant="secondary">
-                  {scopeLabels[scope]}
+                  {scopeLabels[scope] || scope}
                 </Badge>
               ))}
             </div>
@@ -127,45 +159,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Test chat */}
-        <Card className="flex flex-col">
-          <CardHeader className="pb-3">
+        <Card className="flex h-[500px] flex-col overflow-hidden">
+          <CardHeader className="pb-0">
             <CardTitle className="text-base">Test din agent</CardTitle>
-            <CardDescription>Prøv at chatte (demo)</CardDescription>
+            <CardDescription>Prøv at chatte med {currentAgent.agent_name}</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col">
-            <div className="flex-1 space-y-3 rounded-lg border bg-muted/30 p-3">
-              <div className="flex gap-2">
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <HugeiconsIcon icon={AiBrain01Icon} size={14} className="text-primary" />
-                </div>
-                <div className="flex-1 rounded-lg bg-background p-2.5 text-sm shadow-sm">
-                  Hej! Hvad kan jeg hjælpe dig med?
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <div className="max-w-[80%] rounded-lg bg-primary p-2.5 text-sm text-primary-foreground">
-                  Hvad er jeres åbningstider?
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <HugeiconsIcon icon={AiBrain01Icon} size={14} className="text-primary" />
-                </div>
-                <div className="flex-1 rounded-lg bg-background p-2.5 text-sm shadow-sm">
-                  Vi har åbent man-fre kl. 9-17.
-                </div>
-              </div>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <Input
-                placeholder="Skriv en besked..."
-                className="flex-1 text-sm"
-                disabled
-              />
-              <Button size="icon" variant="secondary" disabled>
-                <HugeiconsIcon icon={SentIcon} size={16} />
-              </Button>
-            </div>
+          <CardContent className="flex-1 p-0">
+            <ChatWidget
+              agentId={currentAgent.id}
+              agentName={currentAgent.agent_name}
+              className="h-full"
+            />
           </CardContent>
         </Card>
       </div>

@@ -20,6 +20,7 @@ type WizardShellProps = {
   onBack: () => void
   onComplete: () => void
   canProceed: boolean
+  isSubmitting?: boolean
   children: React.ReactNode
 }
 
@@ -30,6 +31,7 @@ export function WizardShell({
   onBack,
   onComplete,
   canProceed,
+  isSubmitting = false,
   children,
 }: WizardShellProps) {
   const isFirstStep = currentStep === 0
@@ -73,8 +75,8 @@ export function WizardShell({
                 {currentStep + 1} / {steps.length}
               </div>
               {isLastStep ? (
-                <Button size="sm" onClick={onComplete} disabled={!canProceed}>
-                  Opret agent
+                <Button size="sm" onClick={onComplete} disabled={!canProceed || isSubmitting}>
+                  {isSubmitting ? "Opretter..." : "Opret agent"}
                 </Button>
               ) : (
                 <Button size="sm" onClick={onNext} disabled={!canProceed}>

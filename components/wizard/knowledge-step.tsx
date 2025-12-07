@@ -14,13 +14,26 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { type KnowledgeLink, type KnowledgeDocument } from "@/lib/mock-data"
+
+// Lokale typer til wizard (simplificeret version)
+type WizardKnowledgeLink = {
+  id: string
+  label: string
+  url: string
+}
+
+type WizardKnowledgeDocument = {
+  id: string
+  name: string
+  type: string
+  size: string
+}
 
 type KnowledgeStepProps = {
-  links: KnowledgeLink[]
-  documents: KnowledgeDocument[]
-  onLinksChange: (links: KnowledgeLink[]) => void
-  onDocumentsChange: (documents: KnowledgeDocument[]) => void
+  links: WizardKnowledgeLink[]
+  documents: WizardKnowledgeDocument[]
+  onLinksChange: (links: WizardKnowledgeLink[]) => void
+  onDocumentsChange: (documents: WizardKnowledgeDocument[]) => void
 }
 
 export function KnowledgeStep({
@@ -34,7 +47,7 @@ export function KnowledgeStep({
 
   const addLink = () => {
     if (!newLinkLabel.trim() || !newLinkUrl.trim()) return
-    const newLink: KnowledgeLink = {
+    const newLink: WizardKnowledgeLink = {
       id: `link-${Date.now()}`,
       label: newLinkLabel.trim(),
       url: newLinkUrl.trim(),
@@ -49,7 +62,7 @@ export function KnowledgeStep({
   }
 
   const handleFakeUpload = () => {
-    const fakeDoc: KnowledgeDocument = {
+    const fakeDoc: WizardKnowledgeDocument = {
       id: `doc-${Date.now()}`,
       name: `Dokument-${documents.length + 1}.pdf`,
       type: "PDF",

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Tick02Icon } from "@hugeicons-pro/core-bulk-rounded"
+import { Tick02Icon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,7 +13,14 @@ import {
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useAgent } from "@/lib/agent-context"
-import { type AgentTone, toneLabels } from "@/lib/mock-data"
+import type { AgentTone } from "@/lib/supabase/types"
+
+const toneLabels: Record<AgentTone, string> = {
+  friendly: "Venlig og uformel",
+  professional: "Rolig og professionel",
+  direct: "Kort og direkte",
+  educational: "Forklarende og pædagogisk",
+}
 
 const toneDescriptions: Record<AgentTone, string> = {
   friendly: "Afslappet og imødekommende. Bruger emoji og uformelt sprog.",
@@ -32,10 +39,11 @@ const toneExamples: Record<AgentTone, string> = {
 const toneOptions: AgentTone[] = ["friendly", "professional", "direct", "educational"]
 
 export default function TonePage() {
-  const { currentAgent } = useAgent()
+  const { currentAgent, updateAgent } = useAgent()
   const [selectedTone, setSelectedTone] = useState<AgentTone>(
     currentAgent?.tone ?? "friendly"
   )
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   if (!currentAgent) {
@@ -46,9 +54,19 @@ export default function TonePage() {
     )
   }
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const handleSave = async () => {
+    if (saving) return
+    setSaving(true)
+    
+    try {
+      await updateAgent(currentAgent.id, { tone: selectedTone })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error("Kunne ikke gemme:", err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -56,7 +74,7 @@ export default function TonePage() {
       <div className="px-4 lg:px-6">
         <h2 className="text-lg font-semibold">Tone og stemme</h2>
         <p className="text-sm text-muted-foreground">
-          Vælg hvordan {currentAgent.agentName} skal kommunikere med dine kunder.
+          Vælg hvordan {currentAgent.agent_name} skal kommunikere med dine kunder.
         </p>
       </div>
 
@@ -97,7 +115,7 @@ export default function TonePage() {
           <CardHeader>
             <CardTitle>Preview</CardTitle>
             <CardDescription>
-              Sådan vil {currentAgent.agentName} svare med den valgte tone
+              Sådan vil {currentAgent.agent_name} svare med den valgte tone
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -108,13 +126,13 @@ export default function TonePage() {
                 </p>
                 <p className="text-sm">
                   {selectedTone === "friendly" &&
-                    `${currentAgent.agentName}: "Hej! 😊 Vi har åbent mandag til fredag kl. 9-17. Er der andet jeg kan hjælpe med?"`}
+                    `${currentAgent.agent_name}: "Hej! 😊 Vi har åbent mandag til fredag kl. 9-17. Er der andet jeg kan hjælpe med?"`}
                   {selectedTone === "professional" &&
-                    `${currentAgent.agentName}: "Vores åbningstider er mandag-fredag kl. 9:00-17:00. Du er velkommen til at kontakte os inden for disse tider."`}
+                    `${currentAgent.agent_name}: "Vores åbningstider er mandag-fredag kl. 9:00-17:00. Du er velkommen til at kontakte os inden for disse tider."`}
                   {selectedTone === "direct" &&
-                    `${currentAgent.agentName}: "Man-fre, 9-17."`}
+                    `${currentAgent.agent_name}: "Man-fre, 9-17."`}
                   {selectedTone === "educational" &&
-                    `${currentAgent.agentName}: "Vi har åbent i hverdagene fra kl. 9 til 17. Det betyder at du kan nå os alle arbejdsdage. I weekenden er vi desværre lukket, men du kan skrive til os her, så svarer vi mandag morgen."`}
+                    `${currentAgent.agent_name}: "Vi har åbent i hverdagene fra kl. 9 til 17. Det betyder at du kan nå os alle arbejdsdage. I weekenden er vi desværre lukket, men du kan skrive til os her, så svarer vi mandag morgen."`}
                 </p>
               </div>
             </div>
@@ -123,8 +141,13 @@ export default function TonePage() {
       </div>
 
       <div className="px-4 lg:px-6">
-        <Button onClick={handleSave} disabled={saved}>
-          {saved ? (
+        <Button onClick={handleSave} disabled={saving || saved}>
+          {saving ? (
+            <>
+              <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+              Gemmer...
+            </>
+          ) : saved ? (
             <>
               <HugeiconsIcon icon={Tick02Icon} size={16} className="mr-2" />
               Gemt!

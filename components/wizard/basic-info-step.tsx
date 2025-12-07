@@ -11,7 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { primaryRoleOptions } from "@/lib/mock-data"
+const primaryRoleOptions = [
+  { value: "customer-support", label: "Kundeservice" },
+  { value: "sales", label: "Salg" },
+  { value: "onboarding", label: "Onboarding" },
+  { value: "technical-support", label: "Teknisk support" },
+  { value: "general", label: "Generel assistent" },
+]
 
 type BasicInfoStepProps = {
   businessName: string

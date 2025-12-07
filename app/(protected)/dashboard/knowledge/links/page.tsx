@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Link01Icon, Add01Icon, Delete01Icon, LinkSquare02Icon } from "@hugeicons-pro/core-bulk-rounded"
+import { Link01Icon, Add01Icon, Delete01Icon, LinkSquare02Icon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,16 +13,37 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
-import { type KnowledgeLink } from "@/lib/mock-data"
+import type { KnowledgeLink } from "@/lib/supabase/types"
 
 export default function LinksPage() {
   const { currentAgent } = useAgent()
-  const [links, setLinks] = useState<KnowledgeLink[]>(
-    currentAgent?.knowledgeLinks ?? []
-  )
+  const [links, setLinks] = useState<KnowledgeLink[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [newLabel, setNewLabel] = useState("")
   const [newUrl, setNewUrl] = useState("")
+
+  const fetchLinks = useCallback(async () => {
+    if (!currentAgent) return
+    try {
+      setLoading(true)
+      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/links`)
+      if (res.ok) {
+        const data = await res.json()
+        setLinks(data)
+      }
+    } catch (err) {
+      console.error("Kunne ikke hente links:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [currentAgent])
+
+  useEffect(() => {
+    fetchLinks()
+  }, [fetchLinks])
 
   if (!currentAgent) {
     return (
@@ -32,20 +53,43 @@ export default function LinksPage() {
     )
   }
 
-  const addLink = () => {
-    if (!newLabel.trim() || !newUrl.trim()) return
-    const newLink: KnowledgeLink = {
-      id: `link-${Date.now()}`,
-      label: newLabel.trim(),
-      url: newUrl.trim(),
+  const addLink = async () => {
+    if (!newLabel.trim() || !newUrl.trim() || saving) return
+    
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/links`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newLabel.trim(), url: newUrl.trim() }),
+      })
+
+      if (res.ok) {
+        const newLink = await res.json()
+        setLinks([newLink, ...links])
+        setNewLabel("")
+        setNewUrl("")
+      }
+    } catch (err) {
+      console.error("Kunne ikke tilføje link:", err)
+    } finally {
+      setSaving(false)
     }
-    setLinks([...links, newLink])
-    setNewLabel("")
-    setNewUrl("")
   }
 
-  const removeLink = (id: string) => {
-    setLinks(links.filter((link) => link.id !== id))
+  const removeLink = async (id: string) => {
+    try {
+      const res = await fetch(
+        `/api/agents/${currentAgent.id}/knowledge/links?linkId=${id}`,
+        { method: "DELETE" }
+      )
+
+      if (res.ok) {
+        setLinks(links.filter((link) => link.id !== id))
+      }
+    } catch (err) {
+      console.error("Kunne ikke fjerne link:", err)
+    }
   }
 
   return (
@@ -75,6 +119,7 @@ export default function LinksPage() {
                   placeholder="F.eks. FAQ eller Prisliste"
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
+                  disabled={saving}
                 />
               </div>
               <div className="flex-1 space-y-2">
@@ -84,14 +129,19 @@ export default function LinksPage() {
                   placeholder="https://..."
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
+                  disabled={saving}
                 />
               </div>
               <div className="flex items-end">
                 <Button
                   onClick={addLink}
-                  disabled={!newLabel.trim() || !newUrl.trim()}
+                  disabled={!newLabel.trim() || !newUrl.trim() || saving}
                 >
-                  <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
+                  {saving ? (
+                    <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
+                  )}
                   Tilføj
                 </Button>
               </div>
@@ -104,7 +154,21 @@ export default function LinksPage() {
         <h3 className="mb-4 font-medium">
           Tilføjede links ({links.length})
         </h3>
-        {links.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardContent className="flex items-center gap-4 py-4">
+                  <Skeleton className="size-10 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : links.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center gap-2 py-8">
               <HugeiconsIcon icon={Link01Icon} size={32} className="text-muted-foreground" />

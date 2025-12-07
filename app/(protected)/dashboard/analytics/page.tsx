@@ -96,7 +96,7 @@ export default function AnalyticsPage() {
     <div className="flex flex-col gap-6 py-6">
       <div className="px-4 lg:px-6">
         <h2 className="text-lg font-semibold">
-          Analytics for {currentAgent.agentName}
+          Analytics for {currentAgent.agent_name}
         </h2>
         <p className="text-sm text-muted-foreground">
           Se hvordan din agent performer

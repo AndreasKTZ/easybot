@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import type { User } from "@supabase/supabase-js"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Book02Icon,
@@ -44,13 +45,11 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 
-const user = {
-  name: "Demo Bruger",
-  email: "demo@easybot.dk",
-  avatar: "/placeholder.svg",
+type Props = React.ComponentProps<typeof Sidebar> & {
+  user: User
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ user, ...props }: Props) {
   const pathname = usePathname()
   const { agents, currentAgent, setCurrentAgent } = useAgent()
 
@@ -119,6 +118,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       iconSolid: Settings01IconSolid,
     },
   ]
+
+  // Brugerdata til NavUser
+  const userData = {
+    name: user.user_metadata?.full_name || user.email?.split("@")[0] || "Bruger",
+    email: user.email || "",
+    avatar: user.user_metadata?.avatar_url || "",
+  }
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -236,7 +242,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>
   )

@@ -3,7 +3,14 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Tick02Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { cn } from "@/lib/utils"
-import { type AgentTone, toneLabels } from "@/lib/mock-data"
+import type { AgentTone } from "@/lib/supabase/types"
+
+const toneLabels: Record<AgentTone, string> = {
+  friendly: "Venlig og uformel",
+  professional: "Rolig og professionel",
+  direct: "Kort og direkte",
+  educational: "Forklarende og pædagogisk",
+}
 
 const toneConfig: {
   tone: AgentTone
