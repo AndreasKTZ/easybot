@@ -27,8 +27,9 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 })
   }
 
-  const { data, error } = await supabase
-    .from("knowledge_documents")
+  // Note: knowledge_documents table skal oprettes i Supabase
+  const { data, error } = await (supabase
+    .from("knowledge_documents") as any)
     .select("*")
     .eq("agent_id", agentId)
     .order("created_at", { ascending: false })
@@ -64,15 +65,18 @@ export async function POST(request: Request, { params }: Params) {
 
   const body = await request.json()
 
-  const { data, error } = await supabase
-    .from("knowledge_documents")
-    .insert({
-      agent_id: agentId,
-      name: body.name,
-      file_type: body.fileType,
-      file_size: body.fileSize,
-      storage_path: body.storagePath || `documents/${agentId}/${body.name}`,
-    })
+  const insertData = {
+    agent_id: agentId,
+    name: body.name as string,
+    file_type: body.fileType as string,
+    file_size: body.fileSize as number,
+    storage_path: (body.storagePath || `documents/${agentId}/${body.name}`) as string,
+  }
+
+  // Note: knowledge_documents table skal oprettes i Supabase
+  const { data, error } = await (supabase
+    .from("knowledge_documents") as any)
+    .insert(insertData)
     .select()
     .single()
 
@@ -112,8 +116,9 @@ export async function DELETE(request: Request, { params }: Params) {
     return NextResponse.json({ error: "documentId required" }, { status: 400 })
   }
 
-  const { error } = await supabase
-    .from("knowledge_documents")
+  // Note: knowledge_documents table skal oprettes i Supabase
+  const { error } = await (supabase
+    .from("knowledge_documents") as any)
     .delete()
     .eq("id", documentId)
     .eq("agent_id", agentId)
