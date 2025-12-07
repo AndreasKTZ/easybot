@@ -1,180 +1,242 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-} from "@tabler/icons-react"
+  Book02Icon,
+  ChartHistogramIcon,
+  File02Icon,
+  HelpCircleIcon,
+  Home01Icon,
+  Link01Icon,
+  Message01Icon,
+  Settings01Icon,
+  PaintBrushIcon,
+} from "@hugeicons-pro/core-bulk-rounded"
+import {
+  Book02Icon as Book02IconSolid,
+  ChartHistogramIcon as ChartHistogramIconSolid,
+  File02Icon as File02IconSolid,
+  HelpCircleIcon as HelpCircleIconSolid,
+  Home01Icon as Home01IconSolid,
+  Link01Icon as Link01IconSolid,
+  Message01Icon as Message01IconSolid,
+  Settings01Icon as Settings01IconSolid,
+  PaintBrushIcon as PaintBrushIconSolid,
+} from "@hugeicons-pro/core-solid-rounded"
 
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
+import { AgentSwitcher } from "@/components/agent-switcher"
 import { NavUser } from "@/components/nav-user"
+import { useAgent } from "@/lib/agent-context"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "#",
-      icon: IconDashboard,
-    },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
+const user = {
+  name: "Demo Bruger",
+  email: "demo@easybot.dk",
+  avatar: "/placeholder.svg",
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
+  const { agents, currentAgent, setCurrentAgent } = useAgent()
+
+  const overviewItems = [
+    {
+      title: "Oversigt",
+      url: "/dashboard",
+      icon: Home01Icon,
+      iconSolid: Home01IconSolid,
+    },
+    {
+      title: "Analytics",
+      url: "/dashboard/analytics",
+      icon: ChartHistogramIcon,
+      iconSolid: ChartHistogramIconSolid,
+    },
+  ]
+
+  const knowledgeItems = [
+    {
+      title: "Links",
+      url: "/dashboard/knowledge/links",
+      icon: Link01Icon,
+      iconSolid: Link01IconSolid,
+    },
+    {
+      title: "Dokumenter",
+      url: "/dashboard/knowledge/documents",
+      icon: File02Icon,
+      iconSolid: File02IconSolid,
+    },
+  ]
+
+  const settingsItems = [
+    {
+      title: "Tone og stemme",
+      url: "/dashboard/settings/tone",
+      icon: Message01Icon,
+      iconSolid: Message01IconSolid,
+    },
+    {
+      title: "Branding",
+      url: "/dashboard/settings/branding",
+      icon: PaintBrushIcon,
+      iconSolid: PaintBrushIconSolid,
+    },
+    {
+      title: "Grundinfo",
+      url: "/dashboard/settings/info",
+      icon: Book02Icon,
+      iconSolid: Book02IconSolid,
+    },
+  ]
+
+  const supportItems = [
+    {
+      title: "Hjælp",
+      url: "#",
+      icon: HelpCircleIcon,
+      iconSolid: HelpCircleIconSolid,
+    },
+    {
+      title: "Indstillinger",
+      url: "#",
+      icon: Settings01Icon,
+      iconSolid: Settings01IconSolid,
+    },
+  ]
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <AgentSwitcher
+          agents={agents}
+          currentAgent={currentAgent}
+          onAgentChange={setCurrentAgent}
+        />
       </SidebarHeader>
+      <SidebarSeparator />
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {/* Oversigt */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {overviewItems.map((item) => {
+                const isActive = pathname === item.url
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      isActive={isActive}
+                    >
+                      <Link href={item.url}>
+                        <HugeiconsIcon
+                          icon={isActive ? item.iconSolid : item.icon}
+                          size={18}
+                        />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Vidensbase */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Vidensbase</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {knowledgeItems.map((item) => {
+                const isActive = pathname === item.url
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      isActive={isActive}
+                    >
+                      <Link href={item.url}>
+                        <HugeiconsIcon
+                          icon={isActive ? item.iconSolid : item.icon}
+                          size={18}
+                        />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Indstillinger */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Agent-indstillinger</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {settingsItems.map((item) => {
+                const isActive = pathname === item.url
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      isActive={isActive}
+                    >
+                      <Link href={item.url}>
+                        <HugeiconsIcon
+                          icon={isActive ? item.iconSolid : item.icon}
+                          size={18}
+                        />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Support */}
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {supportItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <Link href={item.url}>
+                      <HugeiconsIcon icon={item.icon} size={18} />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )
