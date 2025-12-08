@@ -139,9 +139,8 @@ export default function TonePage() {
           </CardContent>
         </Card>
       </div>
-
       <div className="px-4 lg:px-6">
-        <Button onClick={handleSave} disabled={saving || saved}>
+        <Button onClick={handleSave} disabled={saving || saved} size="lg">
           {saving ? (
             <>
               <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
@@ -156,7 +155,7 @@ export default function TonePage() {
             "Gem ændringer"
           )}
         </Button>
-      </div>
+        </div>
     </div>
   )
 }

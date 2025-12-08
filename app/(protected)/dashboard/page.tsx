@@ -101,24 +101,27 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 py-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
-        <div className="flex items-center gap-4">
-          <div className="flex size-14 items-center justify-center rounded-xl bg-primary/10">
-            <HugeiconsIcon icon={AiBrain01Icon} size={28} className="text-primary" />
+      <div className="relative mx-4 overflow-hidden rounded-xl border bg-background p-6 lg:mx-6">
+        <div className="absolute inset-0 opacity-[0.25]" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-primary text-primary-foreground flex size-14 items-center justify-center rounded-xl shadow-sm">
+              <HugeiconsIcon icon={AiBrain01Icon} size={28} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">
+                {currentAgent.agent_name}
+              </h2>
+              <p className="text-muted-foreground">{currentAgent.business_name}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              {currentAgent.agent_name}
-            </h2>
-            <p className="text-muted-foreground">{currentAgent.business_name}</p>
-          </div>
+          <Button asChild>
+            <Link href={`/agents/${currentAgent.id}/embed`}>
+              <HugeiconsIcon icon={SourceCodeIcon} size={16} className="mr-2" />
+              Hent embed-kode
+            </Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href={`/agents/${currentAgent.id}/embed`}>
-            <HugeiconsIcon icon={SourceCodeIcon} size={16} className="mr-2" />
-            Hent embed-kode
-          </Link>
-        </Button>
       </div>
 
       <div className="grid gap-6 px-4 lg:grid-cols-3 lg:px-6">
@@ -127,20 +130,18 @@ export default function DashboardPage() {
           <h3 className="font-medium">Genveje</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {quickLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="group flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
-              >
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <HugeiconsIcon icon={link.icon} size={20} />
-                </div>
-                <div>
-                  <p className="font-medium">{link.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {link.description}
-                  </p>
-                </div>
+              <Link key={link.href} href={link.href}>
+                <Card className="flex-row items-center gap-4 p-4 hover:bg-accent/50">
+                  <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-lg">
+                    <HugeiconsIcon icon={link.icon} size={20} />
+                  </div>
+                  <div>
+                    <p className="font-medium">{link.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {link.description}
+                    </p>
+                  </div>
+                </Card>
               </Link>
             ))}
           </div>
