@@ -100,6 +100,7 @@ export default function DocumentsPage() {
         toast.success("Dokument uploadet!")
       } else {
         const data = await res.json()
+        console.error("Upload fejl:", res.status, data)
         toast.error(data.error || "Kunne ikke uploade dokument")
       }
     } catch (err) {
