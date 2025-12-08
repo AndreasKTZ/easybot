@@ -162,3 +162,36 @@ create trigger conversations_updated_at
   before update on public.conversations
   for each row execute function public.handle_updated_at();
 
+-- Storage bucket til dokumenter
+-- Kør dette separat i Supabase SQL Editor eller opret via Dashboard
+insert into storage.buckets (id, name, public)
+values ('knowledge-documents', 'knowledge-documents', false)
+on conflict (id) do nothing;
+
+-- Storage policies for knowledge-documents bucket
+create policy "Users can upload documents for own agents"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'knowledge-documents' and
+    (storage.foldername(name))[1] in (
+      select id::text from public.agents where user_id = auth.uid()
+    )
+  );
+
+create policy "Users can view documents for own agents"
+  on storage.objects for select
+  using (
+    bucket_id = 'knowledge-documents' and
+    (storage.foldername(name))[1] in (
+      select id::text from public.agents where user_id = auth.uid()
+    )
+  );
+
+create policy "Users can delete documents for own agents"
+  on storage.objects for delete
+  using (
+    bucket_id = 'knowledge-documents' and
+    (storage.foldername(name))[1] in (
+      select id::text from public.agents where user_id = auth.uid()
+    )
+  );

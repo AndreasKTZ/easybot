@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { File02Icon, Delete01Icon, Upload01Icon, FileEditIcon } from "@hugeicons-pro/core-bulk-rounded"
+import { File02Icon, Delete01Icon, Upload01Icon, FileEditIcon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -16,6 +16,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
 import type { KnowledgeDocument } from "@/lib/supabase/types"
 
+const ALLOWED_TYPES = [
+  "application/pdf",
+  "text/plain",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -26,6 +35,9 @@ export default function DocumentsPage() {
   const { currentAgent } = useAgent()
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([])
   const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchDocuments = useCallback(async () => {
     if (!currentAgent) return
@@ -55,20 +67,31 @@ export default function DocumentsPage() {
     )
   }
 
-  const handleFakeUpload = async () => {
-    // Demo: Opret dokument metadata (ingen reel fil upload)
-    const fakeName = `Dokument-${documents.length + 1}.pdf`
-    const fakeSize = Math.floor(Math.random() * 3000000 + 500000) // 0.5-3.5 MB
+  const validateFile = (file: File): string | null => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return "Filtypen understøttes ikke. Brug PDF, Word eller TXT."
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return "Filen er for stor (max 10 MB)"
+    }
+    return null
+  }
 
+  const uploadFile = async (file: File) => {
+    const error = validateFile(file)
+    if (error) {
+      toast.error(error)
+      return
+    }
+
+    setUploading(true)
     try {
+      const formData = new FormData()
+      formData.append("file", file)
+
       const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/documents`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fakeName,
-          fileType: "PDF",
-          fileSize: fakeSize,
-        }),
+        body: formData,
       })
 
       if (res.ok) {
@@ -76,12 +99,44 @@ export default function DocumentsPage() {
         setDocuments([newDoc, ...documents])
         toast.success("Dokument uploadet!")
       } else {
-        toast.error("Kunne ikke uploade dokument")
+        const data = await res.json()
+        toast.error(data.error || "Kunne ikke uploade dokument")
       }
     } catch (err) {
       console.error("Kunne ikke uploade dokument:", err)
       toast.error("Kunne ikke uploade dokument")
+    } finally {
+      setUploading(false)
     }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      uploadFile(file)
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      uploadFile(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
   }
 
   const removeDocument = async (id: string) => {
@@ -116,38 +171,68 @@ export default function DocumentsPage() {
 
       <div>
         <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-6">
-          <div
-            className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-primary/30 bg-background p-8 transition-colors hover:border-primary/50 cursor-pointer"
-            onClick={handleFakeUpload}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault()
-                handleFakeUpload()
-              }
-            }}
-          >
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <HugeiconsIcon icon={Upload01Icon} size={28} />
-            </div>
-            <div className="text-center">
-              <p className="font-semibold text-lg">Upload dokumenter</p>
-              <p className="text-sm text-muted-foreground">
-                Træk og slip filer her, eller klik for at vælge
+          <CardContent className="p-6">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={uploading}
+            />
+            <div
+              className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-8 transition-colors ${
+                isDragging
+                  ? "border-primary bg-primary/10"
+                  : "border-primary/30 bg-background hover:border-primary/50"
+              } ${uploading ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && !uploading) {
+                  e.preventDefault()
+                  fileInputRef.current?.click()
+                }
+              }}
+            >
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                {uploading ? (
+                  <HugeiconsIcon icon={Loading03Icon} size={28} className="animate-spin" />
+                ) : (
+                  <HugeiconsIcon icon={Upload01Icon} size={28} />
+                )}
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-lg">
+                  {uploading ? "Uploader..." : "Upload dokumenter"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {uploading ? "Vent venligst" : "Træk og slip filer her, eller klik for at vælge"}
+                </p>
+              </div>
+              <Button size="lg" disabled={uploading}>
+                {uploading ? (
+                  <>
+                    <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+                    Uploader...
+                  </>
+                ) : (
+                  <>
+                    <HugeiconsIcon icon={Upload01Icon} size={16} className="mr-2" />
+                    Vælg filer
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                PDF, Word og tekstfiler (max 10 MB)
               </p>
             </div>
-            <Button size="lg">
-              <HugeiconsIcon icon={Upload01Icon} size={16} className="mr-2" />
-              Vælg filer
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              PDF, Word og tekstfiler (max 10 MB)
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </div>
 
       <div>

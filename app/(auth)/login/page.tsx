@@ -21,7 +21,7 @@ export default function LoginPage() {
           </div>
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          © 2024 Easybot. Alle rettigheder forbeholdes.
+          © 2025 Easybot. Alle rettigheder forbeholdes.
         </p>
       </div>
       <div className="bg-primary relative hidden lg:flex flex-col items-center justify-center p-12 overflow-hidden">
