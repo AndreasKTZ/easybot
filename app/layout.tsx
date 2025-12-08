@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cabin, Geist_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const cabin = Cabin({
@@ -28,6 +29,7 @@ export default function RootLayout({
         className={`${cabin.variable} ${geistMono.variable} font-sans antialiased`}
       >
         {children}
+        <Toaster position="bottom-right" />
       </body>
     </html>
   );

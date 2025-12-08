@@ -93,49 +93,46 @@ export default function AnalyticsPage() {
   const maxConversations = Math.max(...mockWeeklyData.map((d) => d.conversations))
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-lg font-semibold">
-          Analytics for {currentAgent.agent_name}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Se hvordan din agent performer
+    <div className="flex flex-col gap-6 p-6 lg:p-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Analytics 📊
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Se hvordan <span className="font-medium text-foreground">{currentAgent.agent_name}</span> performer
         </p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 px-4 sm:grid-cols-2 lg:grid-cols-4 lg:px-6">
-        {statCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <HugeiconsIcon icon={stat.icon} size={16} className="text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center gap-1 text-xs">
-                {stat.trend === "up" ? (
-                  <HugeiconsIcon icon={ArrowUp01Icon} size={12} className="text-success" />
-                ) : (
-                  <HugeiconsIcon icon={ArrowDown01Icon} size={12} className="text-destructive" />
-                )}
-                <span
-                  className={
-                    stat.trend === "up" ? "text-success" : "text-destructive"
-                  }
-                >
-                  {Math.abs(stat.change)}%
-                </span>
-                <span className="text-muted-foreground">fra sidste måned</span>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((stat, index) => (
+          <Card key={stat.title} className={index === 0 ? "border-primary/20 bg-primary/5" : ""}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className={`flex size-10 items-center justify-center rounded-xl ${index === 0 ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}>
+                  <HugeiconsIcon icon={stat.icon} size={20} />
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  {stat.trend === "up" ? (
+                    <HugeiconsIcon icon={ArrowUp01Icon} size={12} className="text-success" />
+                  ) : (
+                    <HugeiconsIcon icon={ArrowDown01Icon} size={12} className="text-destructive" />
+                  )}
+                  <span className={stat.trend === "up" ? "text-success font-medium" : "text-destructive font-medium"}>
+                    {Math.abs(stat.change)}%
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3">
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.title}</p>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-6 px-4 lg:grid-cols-2 lg:px-6">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Weekly chart */}
         <Card>
           <CardHeader>
@@ -187,11 +184,16 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Note */}
-      <div className="px-4 lg:px-6">
-        <p className="text-center text-xs text-muted-foreground">
-          Analytics er demo-data. Rigtig tracking kommer når agenten er live.
-        </p>
-      </div>
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="flex items-center gap-3 p-4">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
+            <span className="text-sm">💡</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Analytics er demo-data. Rigtig tracking kommer når agenten er live.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

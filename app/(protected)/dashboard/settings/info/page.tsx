@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Tick02Icon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
@@ -57,7 +58,6 @@ export default function InfoPage() {
   const [primaryRole, setPrimaryRole] = useState("")
   const [scopes, setScopes] = useState<AgentScope[]>([])
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   // Sync state med currentAgent når den ændres
   useEffect(() => {
@@ -96,25 +96,27 @@ export default function InfoPage() {
         primaryRole,
         scopes,
       })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      toast.success("Indstillinger gemt!")
     } catch (err) {
       console.error("Kunne ikke gemme:", err)
+      toast.error("Kunne ikke gemme indstillinger")
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-lg font-semibold">Grundlæggende info</h2>
-        <p className="text-sm text-muted-foreground">
-          Rediger grundlæggende oplysninger om din agent.
+    <div className="flex flex-col gap-6 p-6 lg:p-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Grundlæggende info ⚙️
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Rediger oplysninger om <span className="font-medium text-foreground">{currentAgent.agent_name}</span>
         </p>
       </div>
 
-      <div className="space-y-6 px-4 lg:px-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Agent-detaljer</CardTitle>
@@ -190,16 +192,11 @@ export default function InfoPage() {
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} disabled={saving || saved}>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? (
             <>
               <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
               Gemmer...
-            </>
-          ) : saved ? (
-            <>
-              <HugeiconsIcon icon={Tick02Icon} size={16} className="mr-2" />
-              Gemt!
             </>
           ) : (
             "Gem ændringer"

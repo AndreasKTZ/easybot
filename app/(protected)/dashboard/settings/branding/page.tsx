@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Tick02Icon,
@@ -72,7 +73,6 @@ export default function BrandingPage() {
   const [selectedIconId, setSelectedIconId] = useState("ai-brain")
   const [iconStyle, setIconStyle] = useState<IconStyle>("bulk")
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   // Sync state med currentAgent når den ændres
   useEffect(() => {
@@ -106,10 +106,10 @@ export default function BrandingPage() {
           logo_url: useIcon ? null : logo,
         },
       })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      toast.success("Branding gemt!")
     } catch (err) {
       console.error("Kunne ikke gemme:", err)
+      toast.error("Kunne ikke gemme branding")
     } finally {
       setSaving(false)
     }
@@ -129,15 +129,17 @@ export default function BrandingPage() {
   const CurrentIcon = iconStyle === "solid" ? selectedIcon.solid : selectedIcon.bulk
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-lg font-semibold">Branding</h2>
-        <p className="text-sm text-muted-foreground">
-          Tilpas udseendet af din chatbot widget til at matche dit brand.
+    <div className="flex flex-col gap-6 p-6 lg:p-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Branding 🎨
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Tilpas udseendet af din chatbot widget til at matche dit brand
         </p>
       </div>
 
-      <div className="space-y-6 px-4 lg:px-6">
+      <div className="space-y-6">
         {/* Logo / Icon */}
         <Card>
           <CardHeader>
@@ -387,16 +389,11 @@ export default function BrandingPage() {
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} disabled={saving || saved}>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? (
             <>
               <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
               Gemmer...
-            </>
-          ) : saved ? (
-            <>
-              <HugeiconsIcon icon={Tick02Icon} size={16} className="mr-2" />
-              Gemt!
             </>
           ) : (
             "Gem ændringer"

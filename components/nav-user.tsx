@@ -3,11 +3,13 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CreditCardIcon,
-  MoreVerticalIcon,
   Logout01Icon,
   Notification02Icon,
   UserCircleIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
+import {
+    MoreVerticalIcon,
+} from "@hugeicons-pro/core-stroke-rounded"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {

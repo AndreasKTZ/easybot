@@ -8,7 +8,7 @@ import {
   ArrowDown01Icon,
   Add01Icon,
   AiBrain01Icon,
-} from "@hugeicons-pro/core-bulk-rounded"
+} from "@hugeicons-pro/core-stroke-rounded"
 import {
   DropdownMenu,
   DropdownMenuContent,

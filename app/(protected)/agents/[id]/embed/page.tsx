@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft01Icon, Copy01Icon, Tick02Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,6 @@ import { useAgent } from "@/lib/agent-context"
 
 export default function EmbedPage() {
   const { currentAgent } = useAgent()
-  const [copied, setCopied] = useState(false)
 
   if (!currentAgent) {
     return (
@@ -31,8 +31,7 @@ export default function EmbedPage() {
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(embedCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    toast.success("Embed-kode kopieret!")
   }
 
   return (
@@ -75,17 +74,8 @@ export default function EmbedPage() {
                   className="absolute right-2 top-2"
                   onClick={handleCopy}
                 >
-                  {copied ? (
-                    <>
-                      <HugeiconsIcon icon={Tick02Icon} size={16} className="mr-1" />
-                      Kopieret!
-                    </>
-                  ) : (
-                    <>
-                      <HugeiconsIcon icon={Copy01Icon} size={16} className="mr-1" />
-                      Kopiér
-                    </>
-                  )}
+                  <HugeiconsIcon icon={Copy01Icon} size={16} className="mr-1" />
+                  Kopiér
                 </Button>
               </div>
 

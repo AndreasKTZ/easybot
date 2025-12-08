@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link01Icon, Add01Icon, Delete01Icon, LinkSquare02Icon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
@@ -69,9 +70,13 @@ export default function LinksPage() {
         setLinks([newLink, ...links])
         setNewLabel("")
         setNewUrl("")
+        toast.success("Link tilføjet!")
+      } else {
+        toast.error("Kunne ikke tilføje link")
       }
     } catch (err) {
       console.error("Kunne ikke tilføje link:", err)
+      toast.error("Kunne ikke tilføje link")
     } finally {
       setSaving(false)
     }
@@ -86,74 +91,88 @@ export default function LinksPage() {
 
       if (res.ok) {
         setLinks(links.filter((link) => link.id !== id))
+        toast.success("Link fjernet")
+      } else {
+        toast.error("Kunne ikke fjerne link")
       }
     } catch (err) {
       console.error("Kunne ikke fjerne link:", err)
+      toast.error("Kunne ikke fjerne link")
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-lg font-semibold">Links</h2>
-        <p className="text-sm text-muted-foreground">
-          Tilføj links til hjælpesider, FAQ, prislister og andet som din agent
-          kan referere til.
+    <div className="flex flex-col gap-6 p-6 lg:p-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Links 🔗
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Tilføj links til hjælpesider, FAQ og prislister som <span className="font-medium text-foreground">{currentAgent.agent_name}</span> kan referere til
         </p>
       </div>
 
-      <div className="px-4 lg:px-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tilføj nyt link</CardTitle>
-            <CardDescription>
-              Angiv et navn og URL til den side du vil tilføje
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="link-label">Navn</Label>
-                <Input
-                  id="link-label"
-                  placeholder="F.eks. FAQ eller Prisliste"
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  disabled={saving}
-                />
-              </div>
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="link-url">URL</Label>
-                <Input
-                  id="link-url"
-                  placeholder="https://..."
-                  value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
-                  disabled={saving}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  onClick={addLink}
-                  disabled={!newLabel.trim() || !newUrl.trim() || saving}
-                >
-                  {saving ? (
-                    <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
-                  ) : (
-                    <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
-                  )}
-                  Tilføj
-                </Button>
-              </div>
+      <div>
+        <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <HugeiconsIcon icon={Add01Icon} size={20} />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="font-semibold">Tilføj nyt link</p>
+              <p className="text-sm text-muted-foreground">Angiv et navn og URL</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="link-label">Navn</Label>
+              <Input
+                id="link-label"
+                className="bg-background"
+                placeholder="F.eks. FAQ eller Prisliste"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                disabled={saving}
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="link-url">URL</Label>
+              <Input
+                id="link-url"
+                className="bg-background"
+                placeholder="https://..."
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                disabled={saving}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button
+                onClick={addLink}
+                disabled={!newLabel.trim() || !newUrl.trim() || saving}
+                size="lg"
+              >
+                {saving ? (
+                  <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+                ) : (
+                  <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
+                )}
+                Tilføj
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       </div>
 
-      <div className="px-4 lg:px-6">
-        <h3 className="mb-4 font-medium">
-          Tilføjede links ({links.length})
-        </h3>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Tilføjede links</h3>
+          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
+            {links.length} {links.length === 1 ? "link" : "links"}
+          </span>
+        </div>
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -169,17 +188,22 @@ export default function LinksPage() {
             ))}
           </div>
         ) : links.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-8">
-              <HugeiconsIcon icon={Link01Icon} size={32} className="text-muted-foreground" />
-              <p className="text-muted-foreground">Ingen links tilføjet endnu</p>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center gap-3 py-12">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <HugeiconsIcon icon={Link01Icon} size={24} className="text-muted-foreground" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">Ingen links endnu</p>
+                <p className="text-sm text-muted-foreground">Tilføj dit første link ovenfor</p>
+              </div>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
             {links.map((link) => (
-              <Card key={link.id}>
-                <CardContent className="flex items-center gap-4 py-4">
+              <Card key={link.id} className="transition-all hover:border-primary/30">
+                <CardContent className="flex items-center gap-4 p-4">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <HugeiconsIcon icon={Link01Icon} size={20} className="text-primary" />
                   </div>

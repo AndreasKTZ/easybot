@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { File02Icon, Delete01Icon, Upload01Icon, FileEditIcon } from "@hugeicons-pro/core-bulk-rounded"
 import { Button } from "@/components/ui/button"
@@ -73,9 +74,13 @@ export default function DocumentsPage() {
       if (res.ok) {
         const newDoc = await res.json()
         setDocuments([newDoc, ...documents])
+        toast.success("Dokument uploadet!")
+      } else {
+        toast.error("Kunne ikke uploade dokument")
       }
     } catch (err) {
       console.error("Kunne ikke uploade dokument:", err)
+      toast.error("Kunne ikke uploade dokument")
     }
   }
 
@@ -88,67 +93,70 @@ export default function DocumentsPage() {
 
       if (res.ok) {
         setDocuments(documents.filter((doc) => doc.id !== id))
+        toast.success("Dokument fjernet")
+      } else {
+        toast.error("Kunne ikke fjerne dokument")
       }
     } catch (err) {
       console.error("Kunne ikke fjerne dokument:", err)
+      toast.error("Kunne ikke fjerne dokument")
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 py-6">
-      <div className="px-4 lg:px-6">
-        <h2 className="text-lg font-semibold">Dokumenter</h2>
-        <p className="text-sm text-muted-foreground">
-          Upload dokumenter som FAQ, produktlister, handelsbetingelser m.m.
+    <div className="flex flex-col gap-6 p-6 lg:p-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Dokumenter 📄
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Upload dokumenter som <span className="font-medium text-foreground">{currentAgent.agent_name}</span> kan bruge til at hjælpe dine kunder
         </p>
       </div>
 
-      <div className="px-4 lg:px-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload dokument</CardTitle>
-            <CardDescription>
-              Understøtter PDF, Word og tekstfiler (max 10 MB)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div
-              className="flex flex-col items-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors hover:border-primary/50 hover:bg-accent/50 cursor-pointer"
-              onClick={handleFakeUpload}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault()
-                  handleFakeUpload()
-                }
-              }}
-            >
-              <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
-                <HugeiconsIcon icon={Upload01Icon} size={24} className="text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="font-medium">Klik for at uploade</p>
-                <p className="text-sm text-muted-foreground">
-                  eller træk og slip filer her
-                </p>
-              </div>
-              <Button variant="secondary">
-                <HugeiconsIcon icon={Upload01Icon} size={16} className="mr-2" />
-                Vælg filer
-              </Button>
+      <div>
+        <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-6">
+          <div
+            className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-primary/30 bg-background p-8 transition-colors hover:border-primary/50 cursor-pointer"
+            onClick={handleFakeUpload}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                handleFakeUpload()
+              }
+            }}
+          >
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+              <HugeiconsIcon icon={Upload01Icon} size={28} />
             </div>
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              Upload er kun visuelt i denne demo-version.
+            <div className="text-center">
+              <p className="font-semibold text-lg">Upload dokumenter</p>
+              <p className="text-sm text-muted-foreground">
+                Træk og slip filer her, eller klik for at vælge
+              </p>
+            </div>
+            <Button size="lg">
+              <HugeiconsIcon icon={Upload01Icon} size={16} className="mr-2" />
+              Vælg filer
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              PDF, Word og tekstfiler (max 10 MB)
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
       </div>
 
-      <div className="px-4 lg:px-6">
-        <h3 className="mb-4 font-medium">
-          Uploadede dokumenter ({documents.length})
-        </h3>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Uploadede dokumenter</h3>
+          <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
+            {documents.length} {documents.length === 1 ? "dokument" : "dokumenter"}
+          </span>
+        </div>
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -164,19 +172,22 @@ export default function DocumentsPage() {
             ))}
           </div>
         ) : documents.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-8">
-              <HugeiconsIcon icon={FileEditIcon} size={32} className="text-muted-foreground" />
-              <p className="text-muted-foreground">
-                Ingen dokumenter uploadet endnu
-              </p>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center gap-3 py-12">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <HugeiconsIcon icon={FileEditIcon} size={24} className="text-muted-foreground" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">Ingen dokumenter endnu</p>
+                <p className="text-sm text-muted-foreground">Upload dit første dokument ovenfor</p>
+              </div>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
             {documents.map((doc) => (
-              <Card key={doc.id}>
-                <CardContent className="flex items-center gap-4 py-4">
+              <Card key={doc.id} className="transition-all hover:border-primary/30">
+                <CardContent className="flex items-center gap-4 p-4">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-chart-5/10">
                     <HugeiconsIcon icon={File02Icon} size={20} className="text-chart-5" />
                   </div>
