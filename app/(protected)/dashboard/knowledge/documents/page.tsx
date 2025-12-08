@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
+import { uploadDocument } from "@/lib/actions/documents"
 import type { KnowledgeDocument } from "@/lib/supabase/types"
 
 const ALLOWED_TYPES = [
@@ -89,19 +90,14 @@ export default function DocumentsPage() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/documents`, {
-        method: "POST",
-        body: formData,
-      })
+      const result = await uploadDocument(currentAgent.id, formData)
 
-      if (res.ok) {
-        const newDoc = await res.json()
-        setDocuments([newDoc, ...documents])
+      if (result.error) {
+        console.error("Upload fejl:", result.error)
+        toast.error(result.error)
+      } else if (result.data) {
+        setDocuments([result.data, ...documents])
         toast.success("Dokument uploadet!")
-      } else {
-        const data = await res.json()
-        console.error("Upload fejl:", res.status, data)
-        toast.error(data.error || "Kunne ikke uploade dokument")
       }
     } catch (err) {
       console.error("Kunne ikke uploade dokument:", err)
