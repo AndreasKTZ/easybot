@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
-import { uploadDocument } from "@/lib/actions/documents"
+import { createClient } from "@/lib/supabase/client"
 import type { KnowledgeDocument } from "@/lib/supabase/types"
 
 const ALLOWED_TYPES = [
@@ -87,17 +87,48 @@ export default function DocumentsPage() {
 
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
+      const supabase = createClient()
 
-      const result = await uploadDocument(currentAgent.id, formData)
+      // Generer unik sti
+      const timestamp = Date.now()
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
+      const storagePath = `${currentAgent.id}/${timestamp}-${safeName}`
 
-      if (result.error) {
-        console.error("Upload fejl:", result.error)
-        toast.error(result.error)
-      } else if (result.data) {
-        setDocuments([result.data, ...documents])
+      // Upload direkte til Supabase Storage fra klienten
+      const { error: uploadError } = await supabase.storage
+        .from("knowledge-documents")
+        .upload(storagePath, file, {
+          contentType: file.type,
+          upsert: false,
+        })
+
+      if (uploadError) {
+        console.error("Storage upload fejl:", uploadError)
+        toast.error(uploadError.message)
+        return
+      }
+
+      // Gem metadata via API
+      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/documents`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name,
+          fileType: getFileExtension(file.type),
+          fileSize: file.size,
+          storagePath,
+        }),
+      })
+
+      if (res.ok) {
+        const newDoc = await res.json()
+        setDocuments([newDoc, ...documents])
         toast.success("Dokument uploadet!")
+      } else {
+        // Slet fil fra storage hvis metadata fejler
+        await supabase.storage.from("knowledge-documents").remove([storagePath])
+        const data = await res.json()
+        toast.error(data.error || "Kunne ikke gemme dokument")
       }
     } catch (err) {
       console.error("Kunne ikke uploade dokument:", err)
@@ -105,6 +136,16 @@ export default function DocumentsPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  function getFileExtension(mimeType: string): string {
+    const map: Record<string, string> = {
+      "application/pdf": "PDF",
+      "text/plain": "TXT",
+      "application/msword": "DOC",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
+    }
+    return map[mimeType] || "FILE"
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
