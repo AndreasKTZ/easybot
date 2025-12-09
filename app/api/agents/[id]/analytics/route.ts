@@ -36,12 +36,12 @@ function getPeriodDates(period: Period) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url)
     const period = (searchParams.get("period") || "month") as Period
-    const agentId = params.id
+    const { id: agentId } = await params
 
     const supabase = createAdminClient()
     const { currentStart, previousStart, currentEnd } = getPeriodDates(period)

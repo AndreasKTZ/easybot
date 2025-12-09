@@ -3,11 +3,11 @@ import { NextResponse } from "next/server"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { rating } = await request.json()
-    const conversationId = params.id
+    const { id: conversationId } = await params
 
     if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Invalid rating. Must be between 1 and 5" }, { status: 400 })
