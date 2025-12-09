@@ -16,6 +16,7 @@ import {
   BubbleChatIcon,
   SentIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
+import { ConversationRating } from "@/components/chat/conversation-rating"
 
 // Markdown-parsing for fed tekst og links
 function parseMessageContent(content: string, linkColor?: string): React.ReactNode[] {
@@ -109,24 +110,80 @@ function WidgetChatContent() {
   const [agentName, setAgentName] = useState("Assistent")
   const [branding, setBranding] = useState<AgentBranding>(defaultBranding)
   const [inputValue, setInputValue] = useState("")
+  const [visitorId, setVisitorId] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [hasRated, setHasRated] = useState(false)
+  const [showRatingFor, setShowRatingFor] = useState<string | null>(null)
+
+  // Generate or retrieve visitor ID
+  useEffect(() => {
+    let id = localStorage.getItem('easybot_visitor_id')
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem('easybot_visitor_id', id)
+    }
+    setVisitorId(id)
+
+    // Load conversation ID from sessionStorage
+    const savedConvId = sessionStorage.getItem('easybot_conversation_id')
+    if (savedConvId) {
+      setConversationId(savedConvId)
+    }
+  }, [])
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { agentId },
+        body: { agentId, visitorId, conversationId },
       }),
-    [agentId]
+    [agentId, visitorId, conversationId]
   )
 
   const { messages, sendMessage, status } = useChat({ transport })
 
   const isLoading = status === "submitted" || status === "streaming"
 
+  // Save conversation ID when we first get messages
+  useEffect(() => {
+    if (messages.length > 0 && !conversationId && agentId) {
+      // After first message, we need to get the conversation ID
+      // For now, we'll fetch it from the API based on visitor ID
+      const fetchConversationId = async () => {
+        try {
+          const response = await fetch(`/api/conversations/latest?agentId=${agentId}&visitorId=${visitorId}`)
+          const data = await response.json()
+          if (data.conversationId) {
+            setConversationId(data.conversationId)
+            sessionStorage.setItem('easybot_conversation_id', data.conversationId)
+          }
+        } catch (error) {
+          console.error('Failed to fetch conversation ID:', error)
+        }
+      }
+      fetchConversationId()
+    }
+  }, [messages, conversationId, agentId, visitorId])
+
   // Scroll til bunden ved nye beskeder
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // Show rating after first assistant message (with delay)
+  useEffect(() => {
+    if (hasRated || !conversationId) return
+
+    const firstAssistantMessage = messages.find(m => m.role === "assistant")
+    if (firstAssistantMessage && !showRatingFor && !isLoading) {
+      // Wait 4 seconds before showing rating
+      const timer = setTimeout(() => {
+        setShowRatingFor(firstAssistantMessage.id)
+      }, 4000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [messages, hasRated, conversationId, showRatingFor, isLoading])
 
   // Hent agent info inkl. branding
   useEffect(() => {
@@ -231,24 +288,38 @@ function WidgetChatContent() {
               .join("") || ""
 
             return (
-              <div
-                key={message.id}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
+              <div key={message.id}>
                 <div
-                  className="max-w-[85%] rounded-2xl px-4 py-2.5"
-                  style={
-                    message.role === "user"
-                      ? { backgroundColor: primaryColor, color: "white" }
-                      : { backgroundColor: "#f3f4f6", color: "#111827" }
-                  }
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <p className="whitespace-pre-wrap text-sm">
-                    {message.role === "assistant" 
-                      ? parseMessageContent(textContent, primaryColor) 
-                      : textContent}
-                  </p>
+                  <div
+                    className="max-w-[85%] rounded-2xl px-4 py-2.5"
+                    style={
+                      message.role === "user"
+                        ? { backgroundColor: primaryColor, color: "white" }
+                        : { backgroundColor: "#f3f4f6", color: "#111827" }
+                    }
+                  >
+                    <p className="whitespace-pre-wrap text-sm">
+                      {message.role === "assistant"
+                        ? parseMessageContent(textContent, primaryColor)
+                        : textContent}
+                    </p>
+                  </div>
                 </div>
+                {/* Show rating after first assistant message */}
+                {message.role === "assistant" &&
+                 showRatingFor === message.id &&
+                 conversationId &&
+                 !hasRated && (
+                  <div className="mt-2">
+                    <ConversationRating
+                      conversationId={conversationId}
+                      primaryColor={primaryColor}
+                      onRated={() => setHasRated(true)}
+                    />
+                  </div>
+                )}
               </div>
             )
           })}

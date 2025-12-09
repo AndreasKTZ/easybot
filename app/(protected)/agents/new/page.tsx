@@ -68,9 +68,9 @@ export default function NewAgentPage() {
   // Form state
   const [businessName, setBusinessName] = useState("")
   const [agentName, setAgentName] = useState("")
-  const [primaryRole, setPrimaryRole] = useState("")
-  const [scopes, setScopes] = useState<AgentScope[]>([])
-  const [tone, setTone] = useState<AgentTone | "">("")
+  const [primaryRole, setPrimaryRole] = useState("customer-support")
+  const [scopes, setScopes] = useState<AgentScope[]>(["support", "general"])
+  const [tone, setTone] = useState<AgentTone | "">("friendly")
   const [links, setLinks] = useState<WizardKnowledgeLink[]>([])
   const [documents, setDocuments] = useState<WizardKnowledgeDocument[]>([])
 
@@ -86,6 +86,19 @@ export default function NewAgentPage() {
         return true
       default:
         return false
+    }
+  }
+
+  const blockReason = (): string | null => {
+    switch (currentStep) {
+      case 0:
+        return "Udfyld virksomhedsnavn, agentnavn og rolle"
+      case 1:
+        return "Vælg mindst ét område agenten skal dække"
+      case 2:
+        return "Vælg en tone for svar"
+      default:
+        return null
     }
   }
 
@@ -182,6 +195,7 @@ export default function NewAgentPage() {
       onBack={handleBack}
       onComplete={handleComplete}
       canProceed={canProceed() && !isSubmitting}
+      blockReason={blockReason()}
       isSubmitting={isSubmitting}
     >
       {renderStep()}

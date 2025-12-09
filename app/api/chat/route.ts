@@ -28,10 +28,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log("Chat API request body:", JSON.stringify(body, null, 2))
-    
+
     // AI SDK v5 sender messages i et andet format
     const messages = body.messages || []
     const agentId = body.agentId
+    const visitorId = body.visitorId
+    const conversationId = body.conversationId
+
+    const supabase = createAdminClient()
 
     // Hvis ingen agentId, brug default system prompt
     let systemPrompt = `Du er "EasyBot", en virtuel kundeserviceassistent for virksomheden EasyBot.
@@ -146,10 +150,38 @@ INTERAKTION
 Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst og den givne samtalehistorik.`
     
     console.log("Agent ID received:", agentId)
-    
-    if (agentId) {
-      const supabase = createAdminClient()
 
+    // Find or create conversation
+    let conversation: { id: string } | null = null
+    if (agentId && visitorId) {
+      if (conversationId) {
+        // Find existing conversation
+        const { data } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("id", conversationId)
+          .single()
+        conversation = data
+      }
+
+      if (!conversation) {
+        // Create new conversation
+        const { data, error } = await supabase
+          .from("conversations")
+          .insert({
+            agent_id: agentId,
+            visitor_id: visitorId,
+          })
+          .select("id")
+          .single()
+
+        if (!error && data) {
+          conversation = data
+        }
+      }
+    }
+
+    if (agentId) {
       // Hent agent konfiguration
       const { data: agentData, error: agentError } = await supabase
         .from("agents")
@@ -335,13 +367,61 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
     // Konverter UIMessage[] til ModelMessage[] format
     const modelMessages = convertToModelMessages(normalizedMessages)
 
+    // Save user message if we have a conversation
+    if (conversation && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1]
+      if (lastMessage.role === "user") {
+        const userContent = lastMessage.parts
+          ?.filter((part: any) => part.type === "text")
+          .map((part: any) => part.text)
+          .join("") || lastMessage.content || ""
+
+        await supabase.from("messages").insert({
+          conversation_id: conversation.id,
+          role: "user",
+          content: userContent,
+        })
+      }
+    }
+
     const result = streamText({
       model: google("gemini-2.5-flash"),
       system: systemPrompt,
       messages: modelMessages,
+      onFinish: async ({ text }) => {
+        // Save assistant message after streaming is complete
+        if (conversation && text) {
+          await supabase.from("messages").insert({
+            conversation_id: conversation.id,
+            role: "assistant",
+            content: text,
+          })
+
+          // Update conversation message count
+          const { data: conv } = await supabase
+            .from("conversations")
+            .select("message_count")
+            .eq("id", conversation.id)
+            .single()
+
+          if (conv) {
+            await supabase
+              .from("conversations")
+              .update({ message_count: (conv.message_count || 0) + 2 })
+              .eq("id", conversation.id)
+          }
+        }
+      },
     })
 
-    return result.toUIMessageStreamResponse()
+    const response = result.toUIMessageStreamResponse()
+
+    // Add conversation ID to response headers if it's a new conversation
+    if (conversation && !conversationId) {
+      response.headers.set('X-Conversation-ID', conversation.id)
+    }
+
+    return response
   } catch (error) {
     console.error("Chat API error:", error)
     return new Response(JSON.stringify({ error: "Internal server error" }), { 

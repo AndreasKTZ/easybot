@@ -61,6 +61,10 @@ export type Conversation = {
   visitor_id: string
   created_at: string
   updated_at: string
+  ended_at: string | null
+  message_count: number
+  rating: number | null
+  rated_at: string | null
 }
 
 export type Message = {
@@ -68,6 +72,22 @@ export type Message = {
   conversation_id: string
   role: "user" | "assistant"
   content: string
+  created_at: string
+}
+
+export type QuestionCluster = {
+  id: string
+  agent_id: string
+  representative_question: string
+  question_count: number
+  last_asked: string
+  created_at: string
+}
+
+export type ClusteredMessage = {
+  id: string
+  message_id: string
+  cluster_id: string
   created_at: string
 }
 
@@ -91,13 +111,23 @@ export type Database = {
       }
       conversations: {
         Row: Conversation
-        Insert: Omit<Conversation, "id" | "created_at" | "updated_at">
+        Insert: Omit<Conversation, "id" | "created_at" | "updated_at" | "ended_at" | "message_count" | "rating" | "rated_at">
         Update: Partial<Omit<Conversation, "id" | "created_at" | "updated_at">>
       }
       messages: {
         Row: Message
         Insert: Omit<Message, "id" | "created_at">
         Update: Partial<Omit<Message, "id" | "created_at">>
+      }
+      question_clusters: {
+        Row: QuestionCluster
+        Insert: Omit<QuestionCluster, "id" | "created_at">
+        Update: Partial<Omit<QuestionCluster, "id" | "created_at">>
+      }
+      clustered_messages: {
+        Row: ClusteredMessage
+        Insert: Omit<ClusteredMessage, "id" | "created_at">
+        Update: Partial<Omit<ClusteredMessage, "id" | "created_at">>
       }
     }
   }

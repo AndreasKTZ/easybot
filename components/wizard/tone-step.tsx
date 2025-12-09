@@ -53,7 +53,7 @@ export function ToneStep({ tone, onToneChange }: ToneStepProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Vælg den tone der bedst matcher dit brand.
+        Vælg den tone der bedst matcher dit brand. Du kan altid finjustere senere.
       </p>
 
       <div className="grid gap-2.5 sm:grid-cols-2">

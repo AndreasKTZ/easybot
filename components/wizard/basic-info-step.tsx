@@ -50,6 +50,9 @@ export function BasicInfoStep({
             value={businessName}
             onChange={(e) => onBusinessNameChange(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Brug det navn dine kunder kender – det vises i svarene.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -63,6 +66,9 @@ export function BasicInfoStep({
             value={agentName}
             onChange={(e) => onAgentNameChange(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Kort og personligt navn hjælper brugerne i gang.
+          </p>
         </div>
 
         <div className="space-y-2">

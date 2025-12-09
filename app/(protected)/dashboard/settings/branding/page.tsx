@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, type ChangeEvent } from "react"
 import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -73,6 +73,8 @@ export default function BrandingPage() {
   const [selectedIconId, setSelectedIconId] = useState("ai-brain")
   const [iconStyle, setIconStyle] = useState<IconStyle>("bulk")
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Sync state med currentAgent når den ændres
   useEffect(() => {
@@ -94,7 +96,7 @@ export default function BrandingPage() {
   }
 
   const handleSave = async () => {
-    if (saving) return
+    if (saving || uploading) return
     setSaving(true)
     
     try {
@@ -116,13 +118,95 @@ export default function BrandingPage() {
   }
 
   const handleLogoUpload = () => {
-    setLogo("/placeholder.svg")
-    setUseIcon(false)
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !currentAgent) return
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Fil skal være et billede (PNG, JPG eller SVG)")
+      event.target.value = ""
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Maks størrelse er 2 MB")
+      event.target.value = ""
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch(`/api/agents/${currentAgent.id}/branding/logo`, {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data?.error || "Kunne ikke uploade logo")
+      }
+
+      await updateAgent(currentAgent.id, {
+        branding: {
+          primary_color: primaryColor,
+          icon_id: selectedIconId,
+          icon_style: iconStyle,
+          logo_url: data.url,
+        },
+      })
+
+      setLogo(data.url)
+      setUseIcon(false)
+      toast.success("Logo uploadet")
+    } catch (err) {
+      console.error("Upload fejlede:", err)
+      toast.error(err instanceof Error ? err.message : "Kunne ikke uploade logo")
+    } finally {
+      setUploading(false)
+      event.target.value = ""
+    }
   }
 
   const handleRemoveLogo = () => {
-    setLogo(null)
-    setUseIcon(true)
+    if (!currentAgent) return
+    setUploading(true)
+    const urlToDelete = logo
+
+    const removeLogo = async () => {
+      try {
+        await updateAgent(currentAgent.id, {
+          branding: {
+            primary_color: primaryColor,
+            icon_id: selectedIconId,
+            icon_style: iconStyle,
+            logo_url: null,
+          },
+        })
+        setLogo(null)
+        setUseIcon(true)
+        if (urlToDelete) {
+          await fetch(`/api/agents/${currentAgent.id}/branding/logo`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: urlToDelete }),
+          })
+        }
+        toast.success("Logo fjernet")
+      } catch (err) {
+        console.error("Fjern logo fejlede:", err)
+        toast.error("Kunne ikke fjerne logo")
+      } finally {
+        setUploading(false)
+      }
+    }
+
+    removeLogo()
   }
 
   const selectedIcon = iconOptions.find((opt) => opt.id === selectedIconId) || iconOptions[0]
@@ -149,6 +233,14 @@ export default function BrandingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/svg+xml"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
             {/* Preview */}
             <div className="flex items-center gap-4">
               <div
@@ -305,7 +397,7 @@ export default function BrandingPage() {
                 </div>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                Upload er kun visuelt i denne demo.
+                Logo gemmes i Supabase storage pr. agent.
               </p>
             </div>
           </CardContent>
@@ -389,11 +481,16 @@ export default function BrandingPage() {
           </CardContent>
         </Card>
 
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving || uploading}>
           {saving ? (
             <>
               <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
               Gemmer...
+            </>
+          ) : uploading ? (
+            <>
+              <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+              Arbejder...
             </>
           ) : (
             "Gem ændringer"

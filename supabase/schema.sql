@@ -47,7 +47,11 @@ create table if not exists public.conversations (
   agent_id uuid references public.agents(id) on delete cascade not null,
   visitor_id text not null,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  ended_at timestamptz,
+  message_count integer default 0,
+  rating integer check (rating >= 1 and rating <= 5),
+  rated_at timestamptz
 );
 
 -- Messages tabel
@@ -196,3 +200,39 @@ create policy "Users can delete documents for own agents"
       select id::text from public.agents where user_id = auth.uid()
     )
   );
+
+-- Question clusters tabel (for analytics)
+create table if not exists public.question_clusters (
+  id uuid primary key default gen_random_uuid(),
+  agent_id uuid references public.agents(id) on delete cascade not null,
+  representative_question text not null,
+  question_count integer default 1,
+  last_asked timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists question_clusters_agent_id_idx on public.question_clusters(agent_id);
+
+alter table public.question_clusters enable row level security;
+
+create policy "Users can view clusters for own agents"
+  on public.question_clusters for select
+  using (agent_id in (select id from public.agents where user_id = auth.uid()));
+
+-- Clustered messages tabel (links messages to clusters)
+create table if not exists public.clustered_messages (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid references public.messages(id) on delete cascade not null,
+  cluster_id uuid references public.question_clusters(id) on delete cascade not null,
+  created_at timestamptz not null default now(),
+  unique(message_id)
+);
+
+create index if not exists clustered_messages_message_id_idx on public.clustered_messages(message_id);
+create index if not exists clustered_messages_cluster_id_idx on public.clustered_messages(cluster_id);
+
+alter table public.clustered_messages enable row level security;
+
+create policy "Users can view clustered messages"
+  on public.clustered_messages for select
+  using (true);
