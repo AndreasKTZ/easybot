@@ -1,12 +1,12 @@
 import { google } from "@ai-sdk/google"
 import { generateText } from "ai"
-import { PDFParse } from "pdf-parse"
+// @ts-expect-error - pdf-parse v1 har ikke typer
+import pdf from "pdf-parse/lib/pdf-parse.js"
 
-// Exctract tekst fra PDF buffer
+// Ekstraher tekst fra PDF buffer
 export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  const parser = new PDFParse({ data: new Uint8Array(buffer) })
-  const result = await parser.getText()
-  return result.text
+  const data = await pdf(buffer)
+  return data.text
 }
 
 // Exctract tekst fra plain text filer
