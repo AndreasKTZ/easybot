@@ -18,7 +18,7 @@ import {
 } from "@hugeicons-pro/core-bulk-rounded"
 
 // Markdown-parsing for fed tekst og links
-function parseMessageContent(content: string): React.ReactNode[] {
+function parseMessageContent(content: string, linkColor?: string): React.ReactNode[] {
   const result: React.ReactNode[] = []
   // Kombineret regex for **bold** og [link](url)
   const regex = /(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)]+)\))/g
@@ -48,6 +48,7 @@ function parseMessageContent(content: string): React.ReactNode[] {
           target="_blank"
           rel="noopener noreferrer"
           className="underline hover:no-underline"
+          style={linkColor ? { color: linkColor } : undefined}
         >
           {match[4]}
         </a>
@@ -244,7 +245,7 @@ function WidgetChatContent() {
                 >
                   <p className="whitespace-pre-wrap text-sm">
                     {message.role === "assistant" 
-                      ? parseMessageContent(textContent) 
+                      ? parseMessageContent(textContent, primaryColor) 
                       : textContent}
                   </p>
                 </div>
