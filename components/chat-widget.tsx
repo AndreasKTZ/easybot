@@ -7,40 +7,52 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-// Simpel markdown-parsing for links
+// Markdown-parsing for fed tekst og links
 function parseMessageContent(content: string): React.ReactNode[] {
-  const parts: React.ReactNode[] = []
-  // Match markdown links: [text](url)
-  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+  const result: React.ReactNode[] = []
+  // Kombineret regex for **bold** og [link](url)
+  const regex = /(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)]+)\))/g
   let lastIndex = 0
   let match
+  let keyIndex = 0
 
-  while ((match = linkRegex.exec(content)) !== null) {
-    // Tilføj tekst før linket
+  while ((match = regex.exec(content)) !== null) {
+    // Tilføj tekst før match
     if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index))
+      result.push(content.slice(lastIndex, match.index))
     }
-    // Tilføj linket som et anchor element
-    parts.push(
-      <a
-        key={match.index}
-        href={match[2]}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary underline hover:no-underline"
-      >
-        {match[1]}
-      </a>
-    )
+
+    if (match[1]) {
+      // Fed tekst: **text**
+      result.push(
+        <strong key={keyIndex++} className="font-semibold">
+          {match[2]}
+        </strong>
+      )
+    } else if (match[3]) {
+      // Link: [text](url)
+      result.push(
+        <a
+          key={keyIndex++}
+          href={match[5]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline hover:no-underline"
+        >
+          {match[4]}
+        </a>
+      )
+    }
+
     lastIndex = match.index + match[0].length
   }
 
   // Tilføj resterende tekst
   if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex))
+    result.push(content.slice(lastIndex))
   }
 
-  return parts.length > 0 ? parts : [content]
+  return result.length > 0 ? result : [content]
 }
 
 type Message = {
