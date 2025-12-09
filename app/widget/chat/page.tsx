@@ -110,30 +110,55 @@ function WidgetChatContent() {
   const [agentName, setAgentName] = useState("Assistent")
   const [branding, setBranding] = useState<AgentBranding>(defaultBranding)
   const [inputValue, setInputValue] = useState("")
-  const [visitorId, setVisitorId] = useState<string | null>(null)
-  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [visitorId, setVisitorId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null
+
+    const existingId = localStorage.getItem("easybot_visitor_id")
+    if (existingId) {
+      console.log("[Widget] Retrieved existing visitor ID:", existingId)
+      return existingId
+    }
+
+    const newId = crypto.randomUUID()
+    localStorage.setItem("easybot_visitor_id", newId)
+    console.log("[Widget] Generated new visitor ID:", newId)
+    return newId
+  })
+  const [conversationId, setConversationId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null
+
+    const storedId = sessionStorage.getItem("easybot_conversation_id")
+    if (storedId) {
+      console.log("[Widget] Retrieved conversation ID from storage:", storedId)
+      return storedId
+    }
+
+    return null
+  })
   const [hasRated, setHasRated] = useState(false)
   const [showRatingFor, setShowRatingFor] = useState<string | null>(null)
 
-  // Generate or retrieve visitor ID
+  // Sørger for at visitor-id findes ved første render
   useEffect(() => {
-    let id = localStorage.getItem('easybot_visitor_id')
-    if (!id) {
-      id = crypto.randomUUID()
-      localStorage.setItem('easybot_visitor_id', id)
-      console.log('[Widget] Generated new visitor ID:', id)
-    } else {
-      console.log('[Widget] Retrieved existing visitor ID:', id)
-    }
-    setVisitorId(id)
+    if (visitorId || typeof window === "undefined") return
 
-    // Load conversation ID from sessionStorage
-    const savedConvId = sessionStorage.getItem('easybot_conversation_id')
-    if (savedConvId) {
-      console.log('[Widget] Retrieved conversation ID from storage:', savedConvId)
-      setConversationId(savedConvId)
+    const existingId = localStorage.getItem("easybot_visitor_id")
+    if (existingId) {
+      setVisitorId(existingId)
+      console.log("[Widget] Retrieved visitor ID after mount:", existingId)
+      return
     }
-  }, [])
+
+    const newId = crypto.randomUUID()
+    localStorage.setItem("easybot_visitor_id", newId)
+    setVisitorId(newId)
+    console.log("[Widget] Generated visitor ID after mount:", newId)
+  }, [visitorId])
+
+  useEffect(() => {
+    if (!conversationId || typeof window === "undefined") return
+    sessionStorage.setItem("easybot_conversation_id", conversationId)
+  }, [conversationId])
 
   const transport = useMemo(() => {
     console.log('[Widget] Creating transport with:', { agentId, visitorId, conversationId })
@@ -147,7 +172,7 @@ function WidgetChatContent() {
 
   const isLoading = status === "submitted" || status === "streaming"
 
-  // Save conversation ID when we first get messages
+  // Gem samtale-id når første besked kommer
   useEffect(() => {
     if (messages.length > 0 && !conversationId && agentId) {
       // After first message, we need to get the conversation ID
@@ -176,7 +201,7 @@ function WidgetChatContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Show rating after first assistant message (with delay)
+  // Vis rating efter første svar fra assistent (med delay)
   useEffect(() => {
     if (hasRated || !conversationId) return
 
