@@ -17,6 +17,54 @@ import {
   SentIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
 
+// Markdown-parsing for fed tekst og links
+function parseMessageContent(content: string): React.ReactNode[] {
+  const result: React.ReactNode[] = []
+  // Kombineret regex for **bold** og [link](url)
+  const regex = /(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)]+)\))/g
+  let lastIndex = 0
+  let match
+  let keyIndex = 0
+
+  while ((match = regex.exec(content)) !== null) {
+    // Tilføj tekst før match
+    if (match.index > lastIndex) {
+      result.push(content.slice(lastIndex, match.index))
+    }
+
+    if (match[1]) {
+      // Fed tekst: **text**
+      result.push(
+        <strong key={keyIndex++} className="font-semibold">
+          {match[2]}
+        </strong>
+      )
+    } else if (match[3]) {
+      // Link: [text](url)
+      result.push(
+        <a
+          key={keyIndex++}
+          href={match[5]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:no-underline"
+        >
+          {match[4]}
+        </a>
+      )
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Tilføj resterende tekst
+  if (lastIndex < content.length) {
+    result.push(content.slice(lastIndex))
+  }
+
+  return result.length > 0 ? result : [content]
+}
+
 // Ikon mapping baseret på branding icon_id
 const iconComponents: Record<string, typeof AiBrain01Icon> = {
   "ai-brain": AiBrain01Icon,
@@ -194,7 +242,11 @@ function WidgetChatContent() {
                       : { backgroundColor: "#f3f4f6", color: "#111827" }
                   }
                 >
-                  <p className="whitespace-pre-wrap text-sm">{textContent}</p>
+                  <p className="whitespace-pre-wrap text-sm">
+                    {message.role === "assistant" 
+                      ? parseMessageContent(textContent) 
+                      : textContent}
+                  </p>
                 </div>
               </div>
             )
