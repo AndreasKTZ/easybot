@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     // Use AI to cluster similar questions
     const { object } = await generateObject({
-      model: google("gemini-2.0-flash-exp"),
+      model: google("gemini-2.5-flash-lite"),
       schema: ClusterSchema,
       prompt: `Analyze these customer questions and group similar ones together.
 Create clusters where questions are asking about the same topic or information.
@@ -77,7 +77,7 @@ Return JSON with clusters of similar questions.`,
       if (existingClusters && existingClusters.length > 0) {
         // Use AI to find if this cluster matches an existing one
         const { object: matchResult } = await generateObject({
-          model: google("gemini-2.0-flash-exp"),
+          model: google("gemini-2.5-flash-lite"),
           schema: z.object({ matchingIndex: z.number().nullable() }),
           prompt: `Does this question match any of the existing clusters?
 New question: "${cluster.representative_question}"

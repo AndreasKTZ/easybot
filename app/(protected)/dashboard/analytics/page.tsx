@@ -10,6 +10,7 @@ import {
   MessageMultiple01Icon,
   UserGroupIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
+import { Bar, BarChart, CartesianGrid, Rectangle, XAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -17,6 +18,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
 import { useAgent } from "@/lib/agent-context"
 
 type Period = "today" | "week" | "month"
@@ -28,7 +35,7 @@ type AnalyticsData = {
     avgConversationLength: { value: number; change: number; trend: "up" | "down" }
     uniqueUsers: { value: number; change: number; trend: "up" | "down" }
   }
-  weeklyData: Array<{ day: string; conversations: number }>
+  buckets: Array<{ label: string; value: number }>
   topQuestions: Array<{ question: string; count: number }>
 }
 
@@ -112,7 +119,20 @@ export default function AnalyticsPage() {
     },
   ]
 
-  const maxConversations = Math.max(...data.weeklyData.map((d) => d.conversations), 1)
+  const buckets = data.buckets || []
+  const bucketValues = buckets.map((b) => Number(b.value) || 0)
+  const maxBucketValue = Math.max(...bucketValues, 0)
+  const hasBucketData = maxBucketValue > 0
+  const chartTitle =
+    period === "today" ? "Samtaler i dag" : period === "week" ? "Samtaler denne uge" : "Samtaler denne måned"
+  const chartDescription = period === "today" ? "Antal samtaler per time" : "Antal samtaler per dag"
+  const chartConfig: ChartConfig = {
+    conversations: {
+      label: "Samtaler",
+      color: "var(--color-primary)",
+    },
+  }
+  const minimalBarHeight = 6
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
@@ -191,27 +211,60 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Weekly chart */}
+        {/* Period chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Samtaler {period === "week" ? "denne uge" : "sidste 7 dage"}</CardTitle>
-            <CardDescription>Antal samtaler per dag</CardDescription>
+            <CardTitle>{chartTitle}</CardTitle>
+            <CardDescription>{chartDescription}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex h-48 items-end gap-2">
-              {data.weeklyData.map((day) => (
-                <div key={day.day} className="flex flex-1 flex-col items-center gap-2">
-                  <div
-                    className="w-full rounded-t bg-primary transition-all hover:bg-primary/80"
-                    style={{
-                      height: `${(day.conversations / maxConversations) * 100}%`,
-                      minHeight: "8px",
+            {(!hasBucketData || buckets.length === 0) ? (
+              <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+                Ingen data endnu
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="max-h-[300px] w-full">
+                <BarChart data={buckets}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    interval={0}
+                    minTickGap={8}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent labelKey="label" nameKey="conversations" />} />
+                  <Bar
+                    dataKey="value"
+                    fill="var(--color-conversations)"
+                    radius={8}
+                    shape={(props: any) => {
+                      const { x, y, width, height, fill } = props as {
+                        x: number
+                        y: number
+                        width: number
+                        height: number
+                        fill: string
+                      }
+                      const h = Math.max(height, minimalBarHeight)
+                      const yAdjusted = y - (h - height)
+                      return (
+                        <Rectangle
+                          x={x}
+                          y={yAdjusted}
+                          width={width}
+                          height={h}
+                          radius={[8, 8, 0, 0]}
+                          fill={fill}
+                        />
+                      )
                     }}
                   />
-                  <span className="text-xs text-muted-foreground">{day.day}</span>
-                </div>
-              ))}
-            </div>
+                </BarChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
 

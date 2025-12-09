@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 
 type Period = "today" | "week" | "month"
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
 function getPeriodDates(period: Period) {
   const now = new Date()
   const startDate = new Date()
@@ -46,52 +48,98 @@ export async function GET(
     const supabase = createAdminClient()
     const { currentStart, previousStart, currentEnd } = getPeriodDates(period)
 
-    // Total Conversations
-    const { count: currentConversations } = await supabase
-      .from("conversations")
-      .select("*", { count: "exact", head: true })
-      .eq("agent_id", agentId)
-      .gte("created_at", currentStart)
-      .lte("created_at", currentEnd)
+    const [
+      currentConvRes,
+      previousConvRes,
+      currentRatingRes,
+      previousRatingRes,
+      currentLengthRes,
+      previousLengthRes,
+      currentUsersRes,
+      previousUsersRes,
+      bucketRes,
+      topClustersRes,
+    ] = await Promise.all([
+      supabase
+        .from("conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("agent_id", agentId)
+        .gte("created_at", currentStart)
+        .lte("created_at", currentEnd),
+      supabase
+        .from("conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("agent_id", agentId)
+        .gte("created_at", previousStart)
+        .lt("created_at", currentStart),
+      supabase
+        .from("conversations")
+        .select("avg:avg(rating)")
+        .eq("agent_id", agentId)
+        .gte("created_at", currentStart)
+        .lte("created_at", currentEnd)
+        .not("rating", "is", null)
+        .maybeSingle(),
+      supabase
+        .from("conversations")
+        .select("avg:avg(rating)")
+        .eq("agent_id", agentId)
+        .gte("created_at", previousStart)
+        .lt("created_at", currentStart)
+        .not("rating", "is", null)
+        .maybeSingle(),
+      supabase
+        .from("conversations")
+        .select("avg:avg(message_count)")
+        .eq("agent_id", agentId)
+        .gte("created_at", currentStart)
+        .lte("created_at", currentEnd)
+        .gt("message_count", 0)
+        .maybeSingle(),
+      supabase
+        .from("conversations")
+        .select("avg:avg(message_count)")
+        .eq("agent_id", agentId)
+        .gte("created_at", previousStart)
+        .lt("created_at", currentStart)
+        .gt("message_count", 0)
+        .maybeSingle(),
+      supabase
+        .from("conversations")
+        .select("visitor_id")
+        .eq("agent_id", agentId)
+        .gte("created_at", currentStart)
+        .lte("created_at", currentEnd),
+      supabase
+        .from("conversations")
+        .select("visitor_id")
+        .eq("agent_id", agentId)
+        .gte("created_at", previousStart)
+        .lt("created_at", currentStart),
+      supabase
+        .from("conversations")
+        .select("created_at")
+        .eq("agent_id", agentId)
+        .gte("created_at", currentStart)
+        .lte("created_at", currentEnd),
+      supabase
+        .from("question_clusters")
+        .select("representative_question, question_count")
+        .eq("agent_id", agentId)
+        .gte("last_asked", currentStart)
+        .order("question_count", { ascending: false })
+        .limit(5),
+    ])
 
-    const { count: previousConversations } = await supabase
-      .from("conversations")
-      .select("*", { count: "exact", head: true })
-      .eq("agent_id", agentId)
-      .gte("created_at", previousStart)
-      .lt("created_at", currentStart)
-
+    const currentConversations = currentConvRes.count || 0
+    const previousConversations = previousConvRes.count || 0
     const conversationsChange =
       previousConversations && previousConversations > 0
         ? ((currentConversations || 0) - previousConversations) / previousConversations * 100
         : 0
 
-    // Satisfaction Rating
-    const { data: currentRatings } = await supabase
-      .from("conversations")
-      .select("rating")
-      .eq("agent_id", agentId)
-      .gte("created_at", currentStart)
-      .lte("created_at", currentEnd)
-      .not("rating", "is", null)
-
-    const currentAvgRating =
-      currentRatings && currentRatings.length > 0
-        ? currentRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / currentRatings.length
-        : 0
-
-    const { data: previousRatings } = await supabase
-      .from("conversations")
-      .select("rating")
-      .eq("agent_id", agentId)
-      .gte("created_at", previousStart)
-      .lt("created_at", currentStart)
-      .not("rating", "is", null)
-
-    const previousAvgRating =
-      previousRatings && previousRatings.length > 0
-        ? previousRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / previousRatings.length
-        : 0
+    const currentAvgRating = Number(currentRatingRes.data?.avg ?? 0)
+    const previousAvgRating = Number(previousRatingRes.data?.avg ?? 0)
 
     const satisfactionChange =
       previousAvgRating > 0
@@ -101,118 +149,89 @@ export async function GET(
     // Convert 5-star rating to percentage (multiply by 20)
     const satisfactionPercentage = Math.round(currentAvgRating * 20)
 
-    // Average Conversation Length
-    const { data: currentLengths } = await supabase
-      .from("conversations")
-      .select("message_count")
-      .eq("agent_id", agentId)
-      .gte("created_at", currentStart)
-      .lte("created_at", currentEnd)
-      .gt("message_count", 0)
-
-    const currentAvgLength =
-      currentLengths && currentLengths.length > 0
-        ? currentLengths.reduce((sum, c) => sum + (c.message_count || 0), 0) / currentLengths.length
-        : 0
-
-    const { data: previousLengths } = await supabase
-      .from("conversations")
-      .select("message_count")
-      .eq("agent_id", agentId)
-      .gte("created_at", previousStart)
-      .lt("created_at", currentStart)
-      .gt("message_count", 0)
-
-    const previousAvgLength =
-      previousLengths && previousLengths.length > 0
-        ? previousLengths.reduce((sum, c) => sum + (c.message_count || 0), 0) / previousLengths.length
-        : 0
+    const currentAvgLength = Number(currentLengthRes.data?.avg ?? 0)
+    const previousAvgLength = Number(previousLengthRes.data?.avg ?? 0)
 
     const lengthChange =
       previousAvgLength > 0
         ? ((currentAvgLength - previousAvgLength) / previousAvgLength) * 100
         : 0
 
-    // Unique Users
-    const { data: currentUsers } = await supabase
-      .from("conversations")
-      .select("visitor_id")
-      .eq("agent_id", agentId)
-      .gte("created_at", currentStart)
-      .lte("created_at", currentEnd)
-
-    const uniqueCurrentUsers = new Set(currentUsers?.map(c => c.visitor_id) || []).size
-
-    const { data: previousUsers } = await supabase
-      .from("conversations")
-      .select("visitor_id")
-      .eq("agent_id", agentId)
-      .gte("created_at", previousStart)
-      .lt("created_at", currentStart)
-
-    const uniquePreviousUsers = new Set(previousUsers?.map(c => c.visitor_id) || []).size
+    const uniqueCurrentUsers = new Set(
+      currentUsersRes.data?.map((c: { visitor_id: string | null }) => c.visitor_id) || []
+    ).size
+    const uniquePreviousUsers = new Set(
+      previousUsersRes.data?.map((c: { visitor_id: string | null }) => c.visitor_id) || []
+    ).size
 
     const usersChange =
       uniquePreviousUsers > 0
         ? ((uniqueCurrentUsers - uniquePreviousUsers) / uniquePreviousUsers) * 100
         : 0
 
-    // Weekly Data (conversations by day)
-    const weeklyData = []
-    const daysOfWeek = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"]
+    const buckets = (() => {
+      const rows = bucketRes.data || []
 
-    if (period === "week") {
-      for (let i = 0; i < 7; i++) {
-        const dayStart = new Date(currentStart)
-        dayStart.setDate(dayStart.getDate() + i)
-        const dayEnd = new Date(dayStart)
-        dayEnd.setDate(dayEnd.getDate() + 1)
+      if (period === "today") {
+        const bucketArr = Array.from({ length: 24 }, (_, hour) => ({
+          label: hour.toString().padStart(2, "0"),
+          value: 0,
+        }))
 
-        const { count } = await supabase
-          .from("conversations")
-          .select("*", { count: "exact", head: true })
-          .eq("agent_id", agentId)
-          .gte("created_at", dayStart.toISOString())
-          .lt("created_at", dayEnd.toISOString())
-
-        weeklyData.push({
-          day: daysOfWeek[i],
-          conversations: count || 0,
+        rows.forEach((row: { created_at: string }) => {
+          const hour = new Date(row.created_at).getHours()
+          if (hour >= 0 && hour < 24) {
+            bucketArr[hour].value += 1
+          }
         })
+
+        return bucketArr
       }
-    } else {
-      // For today/month, show last 7 days
-      for (let i = 6; i >= 0; i--) {
-        const dayStart = new Date()
-        dayStart.setDate(dayStart.getDate() - i)
-        dayStart.setHours(0, 0, 0, 0)
-        const dayEnd = new Date(dayStart)
-        dayEnd.setDate(dayEnd.getDate() + 1)
 
-        const { count } = await supabase
-          .from("conversations")
-          .select("*", { count: "exact", head: true })
-          .eq("agent_id", agentId)
-          .gte("created_at", dayStart.toISOString())
-          .lt("created_at", dayEnd.toISOString())
+      if (period === "week") {
+        const start = new Date(currentStart)
+        start.setHours(0, 0, 0, 0)
+        const daysOfWeek = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"]
+        const bucketArr = Array.from({ length: 7 }, (_, idx) => ({
+          label: daysOfWeek[idx],
+          value: 0,
+        }))
 
-        weeklyData.push({
-          day: daysOfWeek[dayStart.getDay() === 0 ? 6 : dayStart.getDay() - 1],
-          conversations: count || 0,
+        rows.forEach((row: { created_at: string }) => {
+          const day = new Date(row.created_at)
+          const diff = Math.floor((day.getTime() - start.getTime()) / MS_PER_DAY)
+          if (diff >= 0 && diff < 7) {
+            bucketArr[diff].value += 1
+          }
         })
+
+        return bucketArr
       }
-    }
 
-    // Top Questions (from clusters)
-    const { data: topClusters } = await supabase
-      .from("question_clusters")
-      .select("representative_question, question_count")
-      .eq("agent_id", agentId)
-      .gte("last_asked", currentStart)
-      .order("question_count", { ascending: false })
-      .limit(5)
+      // month (day buckets)
+      const start = new Date(currentStart)
+      start.setHours(0, 0, 0, 0)
+      const endDay = new Date(currentEnd)
+      endDay.setHours(0, 0, 0, 0)
+      const daysInRange = Math.max(1, Math.floor((endDay.getTime() - start.getTime()) / MS_PER_DAY) + 1)
 
-    const topQuestions = topClusters?.map(cluster => ({
+      const bucketArr = Array.from({ length: daysInRange }, (_, idx) => ({
+        label: (idx + 1).toString(),
+        value: 0,
+      }))
+
+      rows.forEach((row: { created_at: string }) => {
+        const day = new Date(row.created_at)
+        const diff = Math.floor((day.getTime() - start.getTime()) / MS_PER_DAY)
+        if (diff >= 0 && diff < daysInRange) {
+          bucketArr[diff].value += 1
+        }
+      })
+
+      return bucketArr
+    })()
+
+    const topQuestions = topClustersRes.data?.map((cluster: { representative_question: string; question_count: number }) => ({
       question: cluster.representative_question,
       count: cluster.question_count,
     })) || []
@@ -240,7 +259,7 @@ export async function GET(
           trend: usersChange >= 0 ? "up" : "down",
         },
       },
-      weeklyData,
+      buckets,
       topQuestions,
     })
   } catch (error) {
