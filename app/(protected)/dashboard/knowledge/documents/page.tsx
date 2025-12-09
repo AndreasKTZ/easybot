@@ -12,19 +12,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAgent } from "@/lib/agent-context"
-import { createClient } from "@/lib/supabase/client"
 import type { KnowledgeDocument } from "@/lib/supabase/types"
+import { uploadDocument } from "@/lib/actions/documents"
 
 const ALLOWED_TYPES = [
   "application/pdf",
   "text/plain",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
+// Upload-trin til progress visning
+type UploadStep = "idle" | "uploading" | "extracting" | "summarizing" | "done"
+
+const UPLOAD_STEPS: Record<UploadStep, { progress: number; label: string }> = {
+  idle: { progress: 0, label: "" },
+  uploading: { progress: 20, label: "Uploader fil..." },
+  extracting: { progress: 50, label: "Læser indhold..." },
+  summarizing: { progress: 80, label: "Genererer opsummering med AI..." },
+  done: { progress: 100, label: "Færdig!" },
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -36,9 +46,11 @@ export default function DocumentsPage() {
   const { currentAgent } = useAgent()
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([])
   const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
+  const [uploadStep, setUploadStep] = useState<UploadStep>("idle")
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const uploading = uploadStep !== "idle"
 
   const fetchDocuments = useCallback(async () => {
     if (!currentAgent) return
@@ -70,7 +82,7 @@ export default function DocumentsPage() {
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return "Filtypen understøttes ikke. Brug PDF, Word eller TXT."
+      return "Filtypen understøttes ikke. Brug PDF eller TXT."
     }
     if (file.size > MAX_FILE_SIZE) {
       return "Filen er for stor (max 10 MB)"
@@ -85,56 +97,36 @@ export default function DocumentsPage() {
       return
     }
 
-    setUploading(true)
     try {
-      const supabase = createClient()
+      // Start progress animation
+      setUploadStep("uploading")
+      
+      // Brug server action til upload og AI-opsummering
+      const formData = new FormData()
+      formData.append("file", file)
+      
+      // Simuler progress trin (server action kører som én operation)
+      setTimeout(() => setUploadStep("extracting"), 500)
+      setTimeout(() => setUploadStep("summarizing"), 1500)
+      
+      const result = await uploadDocument(currentAgent.id, formData)
 
-      // Generer unik sti
-      const timestamp = Date.now()
-      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
-      const storagePath = `${currentAgent.id}/${timestamp}-${safeName}`
-
-      // Upload direkte til Supabase Storage fra klienten
-      const { error: uploadError } = await supabase.storage
-        .from("knowledge-documents")
-        .upload(storagePath, file, {
-          contentType: file.type,
-          upsert: false,
-        })
-
-      if (uploadError) {
-        console.error("Storage upload fejl:", uploadError)
-        toast.error(uploadError.message)
+      if (result.error) {
+        toast.error(result.error)
         return
       }
 
-      // Gem metadata via API
-      const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/documents`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: file.name,
-          fileType: getFileExtension(file.type),
-          fileSize: file.size,
-          storagePath,
-        }),
-      })
-
-      if (res.ok) {
-        const newDoc = await res.json()
-        setDocuments([newDoc, ...documents])
-        toast.success("Dokument uploadet!")
-      } else {
-        // Slet fil fra storage hvis metadata fejler
-        await supabase.storage.from("knowledge-documents").remove([storagePath])
-        const data = await res.json()
-        toast.error(data.error || "Kunne ikke gemme dokument")
+      if (result.data) {
+        setUploadStep("done")
+        setDocuments([result.data, ...documents])
+        toast.success("Dokument uploadet og opsummeret!")
       }
     } catch (err) {
       console.error("Kunne ikke uploade dokument:", err)
       toast.error("Kunne ikke uploade dokument")
     } finally {
-      setUploading(false)
+      // Reset efter kort delay så brugeren ser "done" tilstand
+      setTimeout(() => setUploadStep("idle"), 500)
     }
   }
 
@@ -142,8 +134,6 @@ export default function DocumentsPage() {
     const map: Record<string, string> = {
       "application/pdf": "PDF",
       "text/plain": "TXT",
-      "application/msword": "DOC",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
     }
     return map[mimeType] || "FILE"
   }
@@ -213,62 +203,69 @@ export default function DocumentsPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.txt"
               onChange={handleFileSelect}
               className="hidden"
               disabled={uploading}
             />
-            <div
-              className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-8 transition-colors ${
-                isDragging
-                  ? "border-primary bg-primary/10"
-                  : "border-primary/30 bg-background hover:border-primary/50"
-              } ${uploading ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
-              onClick={() => !uploading && fileInputRef.current?.click()}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if ((e.key === "Enter" || e.key === " ") && !uploading) {
-                  e.preventDefault()
-                  fileInputRef.current?.click()
-                }
-              }}
-            >
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                {uploading ? (
+            {uploading ? (
+              <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-primary/30 bg-background p-8">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                   <HugeiconsIcon icon={Loading03Icon} size={28} className="animate-spin" />
-                ) : (
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-lg">
+                    {UPLOAD_STEPS[uploadStep].label}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Dette kan tage et øjeblik...
+                  </p>
+                </div>
+                <div className="w-full max-w-xs space-y-2">
+                  <Progress value={UPLOAD_STEPS[uploadStep].progress} className="h-2" />
+                  <p className="text-xs text-center text-muted-foreground">
+                    {UPLOAD_STEPS[uploadStep].progress}%
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer ${
+                  isDragging
+                    ? "border-primary bg-primary/10"
+                    : "border-primary/30 bg-background hover:border-primary/50"
+                }`}
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    fileInputRef.current?.click()
+                  }
+                }}
+              >
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                   <HugeiconsIcon icon={Upload01Icon} size={28} />
-                )}
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-lg">
-                  {uploading ? "Uploader..." : "Upload dokumenter"}
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-lg">Upload dokumenter</p>
+                  <p className="text-sm text-muted-foreground">
+                    Træk og slip filer her, eller klik for at vælge
+                  </p>
+                </div>
+                <Button size="lg">
+                  <HugeiconsIcon icon={Upload01Icon} size={16} className="mr-2" />
+                  Vælg filer
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  PDF og tekstfiler (max 10 MB)
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {uploading ? "Vent venligst" : "Træk og slip filer her, eller klik for at vælge"}
-                </p>
               </div>
-              <Button size="lg" disabled={uploading}>
-                {uploading ? (
-                  <>
-                    <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
-                    Uploader...
-                  </>
-                ) : (
-                  <>
-                    <HugeiconsIcon icon={Upload01Icon} size={16} className="mr-2" />
-                    Vælg filer
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                PDF, Word og tekstfiler (max 10 MB)
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
