@@ -154,18 +154,27 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
     // Find or create conversation
     let conversation: { id: string } | null = null
     if (agentId && visitorId) {
+      console.log("Creating/finding conversation for agentId:", agentId, "visitorId:", visitorId)
+
       if (conversationId) {
         // Find existing conversation
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("conversations")
           .select("id")
           .eq("id", conversationId)
           .single()
-        conversation = data
+
+        if (error) {
+          console.log("Error finding conversation:", error)
+        } else {
+          console.log("Found existing conversation:", data)
+          conversation = data
+        }
       }
 
       if (!conversation) {
         // Create new conversation
+        console.log("Creating new conversation...")
         const { data, error } = await supabase
           .from("conversations")
           .insert({
@@ -175,10 +184,15 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
           .select("id")
           .single()
 
-        if (!error && data) {
+        if (error) {
+          console.error("Error creating conversation:", error)
+        } else {
+          console.log("Created new conversation:", data)
           conversation = data
         }
       }
+    } else {
+      console.log("Missing agentId or visitorId:", { agentId, visitorId })
     }
 
     if (agentId) {

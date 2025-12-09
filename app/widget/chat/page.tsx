@@ -121,24 +121,27 @@ function WidgetChatContent() {
     if (!id) {
       id = crypto.randomUUID()
       localStorage.setItem('easybot_visitor_id', id)
+      console.log('[Widget] Generated new visitor ID:', id)
+    } else {
+      console.log('[Widget] Retrieved existing visitor ID:', id)
     }
     setVisitorId(id)
 
     // Load conversation ID from sessionStorage
     const savedConvId = sessionStorage.getItem('easybot_conversation_id')
     if (savedConvId) {
+      console.log('[Widget] Retrieved conversation ID from storage:', savedConvId)
       setConversationId(savedConvId)
     }
   }, [])
 
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        body: { agentId, visitorId, conversationId },
-      }),
-    [agentId, visitorId, conversationId]
-  )
+  const transport = useMemo(() => {
+    console.log('[Widget] Creating transport with:', { agentId, visitorId, conversationId })
+    return new DefaultChatTransport({
+      api: "/api/chat",
+      body: { agentId, visitorId, conversationId },
+    })
+  }, [agentId, visitorId, conversationId])
 
   const { messages, sendMessage, status } = useChat({ transport })
 
@@ -151,14 +154,17 @@ function WidgetChatContent() {
       // For now, we'll fetch it from the API based on visitor ID
       const fetchConversationId = async () => {
         try {
+          console.log('[Widget] Fetching conversation ID for agentId:', agentId, 'visitorId:', visitorId)
           const response = await fetch(`/api/conversations/latest?agentId=${agentId}&visitorId=${visitorId}`)
           const data = await response.json()
+          console.log('[Widget] Received conversation data:', data)
           if (data.conversationId) {
             setConversationId(data.conversationId)
             sessionStorage.setItem('easybot_conversation_id', data.conversationId)
+            console.log('[Widget] Saved conversation ID to state and storage:', data.conversationId)
           }
         } catch (error) {
-          console.error('Failed to fetch conversation ID:', error)
+          console.error('[Widget] Failed to fetch conversation ID:', error)
         }
       }
       fetchConversationId()

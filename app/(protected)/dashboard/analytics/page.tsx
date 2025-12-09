@@ -95,7 +95,7 @@ export default function AnalyticsPage() {
       description: "Gennemsnitlig rating",
     },
     {
-      title: "Samtaleløngde",
+      title: "Samtalelængde",
       value: `${data.stats.avgConversationLength.value}`,
       change: data.stats.avgConversationLength.change,
       trend: data.stats.avgConversationLength.trend,
