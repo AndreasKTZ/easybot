@@ -201,19 +201,29 @@ function WidgetChatContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Vis rating efter første svar fra assistent (med delay)
+  // Nulstil rating prompt når brugeren skriver igen
+  useEffect(() => {
+    if (hasRated) return
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage?.role === "user" && showRatingFor) {
+      setShowRatingFor(null)
+    }
+  }, [messages, hasRated, showRatingFor])
+
+  // Vis rating efter seneste svar fra assistent (med delay)
   useEffect(() => {
     if (hasRated || !conversationId) return
+    if (isLoading) return
 
-    const firstAssistantMessage = messages.find(m => m.role === "assistant")
-    if (firstAssistantMessage && !showRatingFor && !isLoading) {
-      // Wait 4 seconds before showing rating
-      const timer = setTimeout(() => {
-        setShowRatingFor(firstAssistantMessage.id)
-      }, 4000)
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant")
+    if (!lastAssistant) return
+    if (showRatingFor === lastAssistant.id) return
 
-      return () => clearTimeout(timer)
-    }
+    const timer = setTimeout(() => {
+      setShowRatingFor(lastAssistant.id)
+    }, 4000)
+
+    return () => clearTimeout(timer)
   }, [messages, hasRated, conversationId, showRatingFor, isLoading])
 
   // Hent agent info inkl. branding

@@ -173,6 +173,25 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
       }
 
       if (!conversation) {
+        // Reuse seneste samtale for agent + visitor
+        const { data: existingConv, error: existingError } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("agent_id", agentId)
+          .eq("visitor_id", visitorId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (existingConv) {
+          console.log("Reusing existing conversation:", existingConv)
+          conversation = existingConv
+        } else if (existingError && existingError.code !== "PGRST116") {
+          console.log("Error checking existing conversation:", existingError)
+        }
+      }
+
+      if (!conversation) {
         // Create new conversation
         console.log("Creating new conversation...")
         const { data, error } = await supabase
