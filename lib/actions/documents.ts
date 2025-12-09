@@ -1,12 +1,11 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { processDocument } from "@/lib/ai/summarize"
 
 const ALLOWED_TYPES = [
   "application/pdf",
   "text/plain",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -15,8 +14,6 @@ function getFileExtension(mimeType: string): string {
   const map: Record<string, string> = {
     "application/pdf": "PDF",
     "text/plain": "TXT",
-    "application/msword": "DOC",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
   }
   return map[mimeType] || "FILE"
 }
@@ -72,6 +69,17 @@ export async function uploadDocument(agentId: string, formData: FormData) {
     return { error: uploadError.message }
   }
 
+  // Exctract tekst og generér opsummering
+  let summary: string | null = null
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    summary = await processDocument(buffer, file.type, file.name)
+  } catch (err) {
+    console.error("Failed to generate document summary:", err)
+    // Fortsæt uden summary hvis det fejler
+  }
+
   // Gem metadata i database
   const insertData = {
     agent_id: agentId,
@@ -79,6 +87,7 @@ export async function uploadDocument(agentId: string, formData: FormData) {
     file_type: getFileExtension(file.type),
     file_size: file.size,
     storage_path: storagePath,
+    summary,
   }
 
   const { data, error } = await (supabase

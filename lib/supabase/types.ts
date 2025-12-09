@@ -51,6 +51,7 @@ export type KnowledgeDocument = {
   file_type: string
   file_size: number
   storage_path: string
+  summary: string | null
   created_at: string
 }
 

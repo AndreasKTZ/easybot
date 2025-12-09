@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google"
 import { streamText, convertToModelMessages } from "ai"
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { Agent, KnowledgeLink } from "@/lib/supabase/types"
+import type { Agent, KnowledgeLink, KnowledgeDocument } from "@/lib/supabase/types"
 
 // Tillad streaming responses op til 30 sekunder
 export const maxDuration = 30
@@ -171,6 +171,14 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
 
         const links = (linksData || []) as unknown as KnowledgeLink[]
 
+        // Hent knowledge documents med summaries
+        const { data: documentsData } = await supabase
+          .from("knowledge_documents")
+          .select("*")
+          .eq("agent_id", agentId)
+
+        const documents = (documentsData || []) as unknown as KnowledgeDocument[]
+
         // Byg system prompt baseret på agent konfiguration
         const scopeBulletList = agent.scopes.length
           ? agent.scopes
@@ -182,7 +190,13 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
         const linksBulletList = links.length
           ? links.map((link) => `- ${link.label}: ${link.url}`).join("\n")
           : "- Ingen eksterne links tilgængelige."
-        const documentSummaries = "- Ingen dokument-resuméer tilgængelige."
+        
+        // Byg dokument-resuméer fra uploadede dokumenter
+        const docsWithSummary = documents.filter(doc => doc.summary)
+        const documentSummaries = docsWithSummary.length
+          ? docsWithSummary.map(doc => `**${doc.name}:**\n${doc.summary}`).join("\n\n")
+          : "- Ingen dokument-resuméer tilgængelige."
+        
         const escalationInstructions = `Kontakt kundeservice hos ${agent.business_name} for videre hjælp.`
 
         systemPrompt = `Du er "${agent.agent_name}", en virtuel kundeserviceassistent for virksomheden ${agent.business_name}.

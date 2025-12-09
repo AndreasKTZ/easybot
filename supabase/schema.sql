@@ -37,6 +37,7 @@ create table if not exists public.knowledge_documents (
   file_type text not null,
   file_size bigint not null,
   storage_path text not null,
+  summary text,
   created_at timestamptz not null default now()
 );
 
