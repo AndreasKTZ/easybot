@@ -2,9 +2,9 @@
 
 ## Introduktion
 
-EasyBot er en SaaS-platform til oprettelse og administration af AI-drevne kundeservice-chatbots. Platformen gør det muligt for virksomheder at bygge, konfigurere, deploye og monitorere tilpassede chatbots uden at skulle kode.
+EasyBot er en SaaS-platform til oprettelse og administration af AI-drevne kundeservice-chatbots. Platformen gør det muligt for virksomheder at bygge, konfigurere, deploy og administrere tilpassede chatbots uden at skulle kode.
 
-Projektet er udviklet som et skoleprojekt og demonstrerer fuld-stack webudvikling med moderne teknologier, AI-integration og skalerbar arkitektur.
+Projektet er udviklet som et skoleprojekt og demonstrerer webudvikling med moderne teknologier, AI-integration og skalerbar arkitektur.
 
 ### Hovedfunktioner
 
@@ -19,19 +19,10 @@ Projektet er udviklet som et skoleprojekt og demonstrerer fuld-stack webudviklin
 ## Tech Stack
 
 ### Frontend
-- **Next.js 16.0.7** (App Router) - React-framework med server-side rendering
+- **Next.js 16.0.7** (App Router) - React-framework
 - **React 19.2.0** - UI-bibliotek
 - **TypeScript 5** - Type-sikkerhed
 - **Tailwind CSS 4** - Utility-first CSS framework
-- **Motion 12** - Animationsbibliotek
-
-### UI-komponenter
-- **Radix UI** - Accessible headless UI-komponenter
-- **Recharts** - Datavisualisering og grafer
-- **Sonner** - Toast notifikationer
-- **Hugeicons Pro** - Professionelt ikonbibliotek
-- **@dnd-kit** - Drag-and-drop funktionalitet
-- **React Table** (@tanstack/react-table) - Datatabel håndtering
 
 ### Backend & Database
 - **Supabase** - PostgreSQL database med indbygget authentication og storage
@@ -58,7 +49,7 @@ Projektet er udviklet som et skoleprojekt og demonstrerer fuld-stack webudviklin
 ### 1. Clone repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/AndreasKTZ/easybot.git
 cd easybot
 ```
 
@@ -75,107 +66,7 @@ pnpm install
 ### 3. Opsæt Supabase
 
 1. Opret et nyt projekt på [supabase.com](https://supabase.com)
-2. Kør følgende SQL i Supabase SQL Editor for at oprette tabeller:
-
-```sql
--- Agents tabel
-create table agents (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  business_name text not null,
-  agent_name text not null,
-  primary_role text not null,
-  scopes text[] default '{}',
-  tone text default 'friendly',
-  primary_color text default '#000000',
-  icon text,
-  logo_url text,
-  created_at timestamp with time zone default now()
-);
-
--- Conversations tabel
-create table conversations (
-  id uuid primary key default gen_random_uuid(),
-  agent_id uuid references agents not null,
-  visitor_id text not null,
-  rating integer,
-  message_count integer default 0,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now()
-);
-
--- Messages tabel
-create table messages (
-  id uuid primary key default gen_random_uuid(),
-  conversation_id uuid references conversations not null,
-  role text not null,
-  content text not null,
-  created_at timestamp with time zone default now()
-);
-
--- Knowledge documents tabel
-create table knowledge_documents (
-  id uuid primary key default gen_random_uuid(),
-  agent_id uuid references agents not null,
-  title text not null,
-  file_path text not null,
-  summary text,
-  created_at timestamp with time zone default now()
-);
-
--- Knowledge links tabel
-create table knowledge_links (
-  id uuid primary key default gen_random_uuid(),
-  agent_id uuid references agents not null,
-  title text not null,
-  url text not null,
-  created_at timestamp with time zone default now()
-);
-
--- Question clusters tabel (til analytics)
-create table question_clusters (
-  id uuid primary key default gen_random_uuid(),
-  agent_id uuid references agents not null,
-  cluster_name text not null,
-  question_count integer default 0,
-  created_at timestamp with time zone default now()
-);
-
--- Clustered messages tabel
-create table clustered_messages (
-  id uuid primary key default gen_random_uuid(),
-  message_id uuid references messages not null,
-  cluster_id uuid references question_clusters not null,
-  created_at timestamp with time zone default now()
-);
-
--- Row-Level Security (RLS)
-alter table agents enable row level security;
-alter table conversations enable row level security;
-alter table messages enable row level security;
-alter table knowledge_documents enable row level security;
-alter table knowledge_links enable row level security;
-
--- RLS policies (brugere kan kun se deres egne data)
-create policy "Users can view their own agents"
-  on agents for select
-  using (auth.uid() = user_id);
-
-create policy "Users can insert their own agents"
-  on agents for insert
-  with check (auth.uid() = user_id);
-
-create policy "Users can update their own agents"
-  on agents for update
-  using (auth.uid() = user_id);
-
-create policy "Users can delete their own agents"
-  on agents for delete
-  using (auth.uid() = user_id);
-```
-
-3. Opret en storage bucket kaldet `documents` for filuploads:
-   - Gå til Storage → Create bucket → Navn: `documents` → Public: false
+2. Kør supabase/schema.sql i Supabase SQL Editor for at oprette tabeller og bucket
 
 ### 4. Konfigurer environment variables
 
@@ -192,10 +83,10 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 **Hvor finder du disse nøgler:**
 
 - **Supabase URL & Anon Key**: Supabase Dashboard → Settings → API
-- **Service Role Key**: Supabase Dashboard → Settings → API (vises kun én gang - gem den sikkert!)
+- **Service Role Key**: Supabase Dashboard → Settings → API (vises kun én gang)
 - **Google AI API Key**: [Google AI Studio](https://makersuite.google.com/app/apikey)
 
-### 5. Kør udviklerserveren
+### 5. Kør dev-serveren
 
 ```bash
 npm run dev
@@ -316,7 +207,7 @@ easybot/
 └── .env.local
 ```
 
-## Forklaring af nøglekode
+## Forklaring af "key functionality"
 
 ### 1. Chat API endpoint (`app/api/chat/route.ts`)
 
@@ -354,13 +245,13 @@ const { currentAgent, setCurrentAgent } = useAgent()
 
 ### 3. Chat Widget (`components/chat-widget.tsx`)
 
-Embedbar widget der kan integreres på enhver hjemmeside. Widgetten:
+"Embeddable" widget der kan integreres på enhver hjemmeside. Widgetten:
 
 - Loader som en floating knap i nederste højre hjørne
 - Åbner chat i en iframe når brugeren klikker
 - Bruger agent-branding (farve, ikon)
 - Gemmer visitor ID i localStorage for at spore tilbagevendende brugere
-- Responsive og mobile-friendly
+- Responsiv og mobilvenlig
 
 **Integration på eksterne sites:**
 
@@ -370,11 +261,11 @@ Embedbar widget der kan integreres på enhver hjemmeside. Widgetten:
 
 ### 4. Document Summarization (`lib/ai/summarize.ts`)
 
-Når en bruger uploader et PDF eller TXT-dokument:
+Når en bruger uploader en PDF eller TXT-dokument:
 
 1. Filen læses og konverteres til tekst
 2. Teksten sendes til Google Gemini 2.5 Flash
-3. AI'en genererer en kort, koncis opsummering
+3. AI'en genererer en kort, præcis opsummering
 4. Opsummeringen gemmes i databasen
 5. Opsummeringen tilføjes til chatbottens system prompt
 
@@ -421,7 +312,6 @@ Her er en liste af planlagte features der ville tage projektet til næste niveau
 - **Subscription plans**: Free, Pro, Enterprise tiers
 - **Begrænsninger pr. plan**: Antal agenter, beskeder pr. måned, storage
 - **Betalingshistorik**: Dashboard til at se fakturaer og betalinger
-- **Usage-based billing**: Ekstra betaling ved overskridelse af kvote
 
 ### 2. Fuld RAG (Retrieval-Augmented Generation)
 
@@ -445,55 +335,22 @@ Her er en liste af planlagte features der ville tage projektet til næste niveau
 - **Voice input/output**: Tale-til-tekst og tekst-til-tale
 - **Video guides**: Chatbot kan linke til video-tutorials
 
-### 5. Integration med CRM-systemer
-
-- **Salesforce/HubSpot**: Synkroniser leads fra chatbot
-- **Zendesk/Intercom**: Escalate samtaler til menneskelige agenter
-- **Slack/Discord**: Send notifikationer ved vigtige samtaler
-- **Google Analytics**: Spor chatbot-events
-
-### 6. Live Chat Takeover
+### 5. Live Chat Takeover
 
 - **Human handoff**: Lad support-agenter overtage samtaler
 - **Real-time typing indicator**: Vis når en agent skriver
 - **Internal notes**: Support kan tilføje noter til samtaler
 - **Canned responses**: Gemte svar til hyppige spørgsmål
 
-### 7. Whitelabel Solution
-
-- **Custom domain**: Kunder kan bruge eget domæne (chat.deres-firma.dk)
-- **Fjern branding**: Skjul "Powered by EasyBot"
-- **Email customization**: Emails sendt fra kundens domæne
-
-### 8. AI Model Selector
-
-- **Multi-provider support**: OpenAI GPT-4, Claude, Llama 3
-- **Model sammenligning**: A/B test forskellige modeller
-- **Cost optimization**: Vælg billigere modeller til simple queries
-
-### 9. Automatisk træning fra samtaler
+### 6. Automatisk træning fra samtaler
 
 - **Fine-tuning**: Brug historiske samtaler til at fine-tune modeller
 - **Feedback loop**: Lad agenten lære af ratings og korrigeringer
 - **Suggested responses**: Foreslå svar baseret på tidligere succesfulde samtaler
 
-### 10. Compliance & Sikkerhed
+### 7. Compliance & Sikkerhed
 
 - **GDPR tools**: Data eksport, sletning på forespørgsel
 - **Audit logs**: Spor alle ændringer til agenter
 - **2FA**: Two-factor authentication til admin-brugere
 - **IP whitelisting**: Begræns adgang til specifikke IP-adresser
-
----
-
-## Licens
-
-Dette projekt er udviklet som et skoleprojekt og er ikke licenseret til kommerciel brug.
-
-## Support
-
-For spørgsmål eller problemer, kontakt projektejeren.
-
----
-
-**Lavet med ❤️ som et skoleprojekt**
