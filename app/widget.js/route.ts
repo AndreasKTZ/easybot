@@ -94,7 +94,7 @@ export async function GET(request: Request) {
   // Opret chat window container
   var chatWindow = document.createElement("div");
   chatWindow.id = "easybot-chat-window";
-  chatWindow.style.cssText = "position:absolute;bottom:70px;right:0;width:380px;height:550px;max-height:calc(100vh - 100px);background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);overflow:hidden;display:none;flex-direction:column;";
+  chatWindow.style.cssText = "position:absolute;bottom:70px;right:0;width:420px;height:650px;max-height:calc(100vh - 100px);background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.15);overflow:hidden;display:none;flex-direction:column;";
   container.appendChild(chatWindow);
 
   // Toggle chat
