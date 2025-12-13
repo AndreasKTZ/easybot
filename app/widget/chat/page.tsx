@@ -15,33 +15,32 @@ import {
   BubbleChatQuestionIcon,
   BubbleChatIcon,
   SentIcon,
+  MoreHorizontalIcon,
+  Cancel01Icon,
+  RefreshIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
 import { ConversationRating } from "@/components/chat/conversation-rating"
 
-// Markdown-parsing for fed tekst og links
+// Markdown-parsing for bold text and links
 function parseMessageContent(content: string, linkColor?: string): React.ReactNode[] {
   const result: React.ReactNode[] = []
-  // Kombineret regex for **bold** og [link](url)
   const regex = /(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)]+)\))/g
   let lastIndex = 0
   let match
   let keyIndex = 0
 
   while ((match = regex.exec(content)) !== null) {
-    // Tilføj tekst før match
     if (match.index > lastIndex) {
       result.push(content.slice(lastIndex, match.index))
     }
 
     if (match[1]) {
-      // Fed tekst: **text**
       result.push(
         <strong key={keyIndex++} className="font-semibold">
           {match[2]}
         </strong>
       )
     } else if (match[3]) {
-      // Link: [text](url)
       result.push(
         <a
           key={keyIndex++}
@@ -59,7 +58,6 @@ function parseMessageContent(content: string, linkColor?: string): React.ReactNo
     lastIndex = match.index + match[0].length
   }
 
-  // Tilføj resterende tekst
   if (lastIndex < content.length) {
     result.push(content.slice(lastIndex))
   }
@@ -67,7 +65,7 @@ function parseMessageContent(content: string, linkColor?: string): React.ReactNo
   return result.length > 0 ? result : [content]
 }
 
-// Ikon mapping baseret på branding icon_id
+// Icon mapping based on branding icon_id
 const iconComponents: Record<string, typeof AiBrain01Icon> = {
   "ai-brain": AiBrain01Icon,
   "chatbot": ChatBotIcon,
@@ -87,6 +85,13 @@ const defaultBranding = {
   logo_url: null as string | null,
 }
 
+// Default suggestions (can be customized per agent in the future)
+const defaultSuggestions = [
+  "Hvad kan du hjælpe mig med?",
+  "Hvordan kommer jeg i gang?",
+  "Fortæl mig mere om jer",
+]
+
 type AgentBranding = typeof defaultBranding
 
 // Loading fallback
@@ -102,7 +107,7 @@ function ChatLoading() {
   )
 }
 
-// Chat content component der bruger useSearchParams
+// Chat content component
 function WidgetChatContent() {
   const searchParams = useSearchParams()
   const agentId = searchParams.get("agent")
@@ -110,18 +115,18 @@ function WidgetChatContent() {
   const [agentName, setAgentName] = useState("Assistent")
   const [branding, setBranding] = useState<AgentBranding>(defaultBranding)
   const [inputValue, setInputValue] = useState("")
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const [visitorId, setVisitorId] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
 
     const existingId = localStorage.getItem("easybot_visitor_id")
     if (existingId) {
-      console.log("[Widget] Retrieved existing visitor ID:", existingId)
       return existingId
     }
 
     const newId = crypto.randomUUID()
     localStorage.setItem("easybot_visitor_id", newId)
-    console.log("[Widget] Generated new visitor ID:", newId)
     return newId
   })
   const [conversationId, setConversationId] = useState<string | null>(() => {
@@ -129,7 +134,6 @@ function WidgetChatContent() {
 
     const storedId = sessionStorage.getItem("easybot_conversation_id")
     if (storedId) {
-      console.log("[Widget] Retrieved conversation ID from storage:", storedId)
       return storedId
     }
 
@@ -138,21 +142,19 @@ function WidgetChatContent() {
   const [hasRated, setHasRated] = useState(false)
   const [showRatingFor, setShowRatingFor] = useState<string | null>(null)
 
-  // Sørger for at visitor-id findes ved første render
+  // Ensure visitor-id exists on first render
   useEffect(() => {
     if (visitorId || typeof window === "undefined") return
 
     const existingId = localStorage.getItem("easybot_visitor_id")
     if (existingId) {
       setVisitorId(existingId)
-      console.log("[Widget] Retrieved visitor ID after mount:", existingId)
       return
     }
 
     const newId = crypto.randomUUID()
     localStorage.setItem("easybot_visitor_id", newId)
     setVisitorId(newId)
-    console.log("[Widget] Generated visitor ID after mount:", newId)
   }, [visitorId])
 
   useEffect(() => {
@@ -160,33 +162,39 @@ function WidgetChatContent() {
     sessionStorage.setItem("easybot_conversation_id", conversationId)
   }, [conversationId])
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
   const transport = useMemo(() => {
-    console.log('[Widget] Creating transport with:', { agentId, visitorId, conversationId })
     return new DefaultChatTransport({
       api: "/api/chat",
       body: { agentId, visitorId, conversationId },
     })
   }, [agentId, visitorId, conversationId])
 
-  const { messages, sendMessage, status } = useChat({ transport })
+  const { messages, sendMessage, status, setMessages } = useChat({ transport })
 
   const isLoading = status === "submitted" || status === "streaming"
 
-  // Gem samtale-id når første besked kommer
+  // Save conversation-id when first message arrives
   useEffect(() => {
     if (messages.length > 0 && !conversationId && agentId) {
-      // After first message, we need to get the conversation ID
-      // For now, we'll fetch it from the API based on visitor ID
       const fetchConversationId = async () => {
         try {
-          console.log('[Widget] Fetching conversation ID for agentId:', agentId, 'visitorId:', visitorId)
           const response = await fetch(`/api/conversations/latest?agentId=${agentId}&visitorId=${visitorId}`)
           const data = await response.json()
-          console.log('[Widget] Received conversation data:', data)
           if (data.conversationId) {
             setConversationId(data.conversationId)
             sessionStorage.setItem('easybot_conversation_id', data.conversationId)
-            console.log('[Widget] Saved conversation ID to state and storage:', data.conversationId)
           }
         } catch (error) {
           console.error('[Widget] Failed to fetch conversation ID:', error)
@@ -196,12 +204,12 @@ function WidgetChatContent() {
     }
   }, [messages, conversationId, agentId, visitorId])
 
-  // Scroll til bunden ved nye beskeder
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Nulstil rating prompt når brugeren skriver igen
+  // Reset rating prompt when user types again
   useEffect(() => {
     if (hasRated) return
     const lastMessage = messages[messages.length - 1]
@@ -210,7 +218,7 @@ function WidgetChatContent() {
     }
   }, [messages, hasRated, showRatingFor])
 
-  // Vis rating efter seneste svar fra assistent (med delay)
+  // Show rating after latest assistant response (with delay)
   useEffect(() => {
     if (hasRated || !conversationId) return
     if (isLoading) return
@@ -226,7 +234,7 @@ function WidgetChatContent() {
     return () => clearTimeout(timer)
   }, [messages, hasRated, conversationId, showRatingFor, isLoading])
 
-  // Hent agent info inkl. branding
+  // Fetch agent info including branding
   useEffect(() => {
     if (!agentId) return
     fetch(`/api/agents/${agentId}`)
@@ -248,26 +256,36 @@ function WidgetChatContent() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
-    
+
     const message = inputValue.trim()
     setInputValue("")
     await sendMessage({ text: message })
   }
 
-  // Hent ikon component baseret på branding
-  const IconComponent = iconComponents[branding.icon_id] || AiBrain01Icon
-
-  // Generer en lysere version af primary color til baggrunde
-  const lightenColor = (hex: string, percent: number) => {
-    const num = parseInt(hex.replace("#", ""), 16)
-    const r = Math.min(255, Math.floor((num >> 16) + (255 - (num >> 16)) * percent))
-    const g = Math.min(255, Math.floor(((num >> 8) & 0x00ff) + (255 - ((num >> 8) & 0x00ff)) * percent))
-    const b = Math.min(255, Math.floor((num & 0x0000ff) + (255 - (num & 0x0000ff)) * percent))
-    return `rgb(${r}, ${g}, ${b})`
+  const handleSuggestionClick = async (suggestion: string) => {
+    if (isLoading) return
+    await sendMessage({ text: suggestion })
   }
 
+  const handleNewChat = () => {
+    setMessages([])
+    setConversationId(null)
+    sessionStorage.removeItem('easybot_conversation_id')
+    setHasRated(false)
+    setShowRatingFor(null)
+    setMenuOpen(false)
+  }
+
+  const handleEndChat = () => {
+    // Send message to parent to close the widget
+    window.parent.postMessage({ type: 'easybot-close' }, '*')
+    setMenuOpen(false)
+  }
+
+  // Get icon component based on branding
+  const IconComponent = iconComponents[branding.icon_id] || AiBrain01Icon
+
   const primaryColor = branding.primary_color
-  const lightColor = lightenColor(primaryColor, 0.85)
 
   if (!agentId) {
     return (
@@ -278,150 +296,261 @@ function WidgetChatContent() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-white">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div
-          className="flex size-10 items-center justify-center rounded-full text-white"
-          style={{ backgroundColor: primaryColor }}
-        >
-          {branding.logo_url ? (
-            <img
-              src={branding.logo_url}
-              alt={agentName}
-              className="size-6 object-contain"
-            />
-          ) : (
-            <HugeiconsIcon icon={IconComponent} size={20} />
-          )}
-        </div>
-        <div>
-          <p className="font-semibold text-gray-900">{agentName}</p>
-          <p className="text-xs text-gray-500">
-            {isLoading ? "Skriver..." : "Online"}
-          </p>
-        </div>
-      </div>
-
-      {/* Beskeder */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center text-center">
-            <div
-              className="mb-3 flex size-12 items-center justify-center rounded-full"
-              style={{ backgroundColor: lightColor, color: primaryColor }}
-            >
-              <HugeiconsIcon icon={IconComponent} size={24} />
-            </div>
-            <p className="font-medium text-gray-900">Hej! 👋</p>
-            <p className="mt-1 text-sm text-gray-500">
-              Stil mig et spørgsmål, så hjælper jeg dig.
+    <div className="flex h-screen flex-col bg-gray-50">
+      {/* Header with gradient */}
+      <header
+        className="relative flex items-center justify-between px-4 py-3 text-white"
+        style={{
+          background: `linear-gradient(0deg, rgba(255, 255, 255, 0) 29.14%, rgba(255, 255, 255, 0.16) 100%), ${primaryColor}`
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur-sm">
+            {branding.logo_url ? (
+              <img
+                src={branding.logo_url}
+                alt={agentName}
+                className="size-10 rounded-full object-cover"
+              />
+            ) : (
+              <HugeiconsIcon icon={IconComponent} size={22} color="white" />
+            )}
+          </div>
+          <div>
+            <h1 className="font-medium text-sm tracking-tight">{agentName}</h1>
+            <p className="text-xs text-white/70">
+              {isLoading ? "Skriver..." : "Online"}
             </p>
           </div>
-        )}
+        </div>
 
-        <div className="space-y-4">
-          {messages.map((message) => {
-            // Hent tekst fra message parts
-            const textContent = message.parts
-              ?.filter((part) => part.type === "text")
-              .map((part) => (part as { type: "text"; text: string }).text)
-              .join("") || ""
+        {/* Menu button */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex size-9 items-center justify-center rounded-md opacity-90 transition-opacity hover:opacity-70"
+            aria-label="Åbn menu"
+          >
+            <HugeiconsIcon icon={MoreHorizontalIcon} size={20} color="white" />
+          </button>
 
-            return (
-              <div key={message.id}>
-                <div
-                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className="max-w-[85%] rounded-2xl px-4 py-2.5"
-                    style={
-                      message.role === "user"
-                        ? { backgroundColor: primaryColor, color: "white" }
-                        : { backgroundColor: "#f3f4f6", color: "#111827" }
-                    }
-                  >
-                    <p className="whitespace-pre-wrap text-sm">
-                      {message.role === "assistant"
-                        ? parseMessageContent(textContent, primaryColor)
-                        : textContent}
+          {/* Dropdown menu */}
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-50">
+              <button
+                onClick={handleNewChat}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <HugeiconsIcon icon={RefreshIcon} size={16} />
+                Ny samtale
+              </button>
+              <button
+                onClick={handleEndChat}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} size={16} />
+                Luk chat
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex min-h-full flex-col p-4">
+          {/* Welcome message - always shown at top */}
+          {messages.length === 0 && (
+            <div className="mb-4">
+              <div className="flex flex-col gap-2">
+                {/* First bubble with avatar */}
+                <div className="max-w-[85%]">
+                  <div className="rounded-2xl rounded-tl-lg bg-white px-4 py-3 shadow-sm">
+                    <div className="mb-2 flex items-center gap-2">
+                      <div
+                        className="flex size-6 items-center justify-center rounded-full"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        {branding.logo_url ? (
+                          <img
+                            src={branding.logo_url}
+                            alt={agentName}
+                            className="size-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <HugeiconsIcon icon={IconComponent} size={14} color="white" />
+                        )}
+                      </div>
+                      <span
+                        className="text-sm font-medium"
+                        style={{ color: primaryColor }}
+                      >
+                        {agentName}
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-gray-700">
+                      👋 Hej! Jeg er her for at hjælpe dig. Stil mig et spørgsmål!
                     </p>
                   </div>
                 </div>
-                {/* Show rating after first assistant message */}
-                {message.role === "assistant" &&
-                 showRatingFor === message.id &&
-                 conversationId &&
-                 !hasRated && (
-                  <div className="mt-2">
-                    <ConversationRating
-                      conversationId={conversationId}
-                      primaryColor={primaryColor}
-                      onRated={() => setHasRated(true)}
-                    />
+                {/* Second bubble */}
+                <div className="max-w-[85%]">
+                  <div className="rounded-2xl rounded-tl-sm rounded-bl-lg bg-white px-4 py-3 shadow-sm">
+                    <p className="text-sm leading-relaxed text-gray-700">
+                      Du kan vælge et af forslagene nedenfor, eller skrive din egen besked.
+                    </p>
                   </div>
-                )}
-              </div>
-            )
-          })}
-
-          {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-            <div className="flex justify-start">
-              <div className="rounded-2xl bg-gray-100 px-4 py-2.5">
-                <div className="flex gap-1">
-                  <span
-                    className="size-2 animate-bounce rounded-full"
-                    style={{ backgroundColor: primaryColor, animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="size-2 animate-bounce rounded-full"
-                    style={{ backgroundColor: primaryColor, animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="size-2 animate-bounce rounded-full"
-                    style={{ backgroundColor: primaryColor, animationDelay: "300ms" }}
-                  />
                 </div>
               </div>
             </div>
           )}
-        </div>
 
-        <div ref={messagesEndRef} />
+          {/* Messages */}
+          <div className="flex-1 space-y-3">
+            {messages.map((message) => {
+              const textContent = message.parts
+                ?.filter((part) => part.type === "text")
+                .map((part) => (part as { type: "text"; text: string }).text)
+                .join("") || ""
+
+              return (
+                <div key={message.id}>
+                  <div
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                        message.role === "user"
+                          ? "rounded-br-lg"
+                          : "rounded-bl-lg bg-white shadow-sm"
+                      }`}
+                      style={
+                        message.role === "user"
+                          ? { backgroundColor: primaryColor, color: "white" }
+                          : undefined
+                      }
+                    >
+                      <p className={`whitespace-pre-wrap text-sm leading-relaxed ${
+                        message.role === "user" ? "" : "text-gray-700"
+                      }`}>
+                        {message.role === "assistant"
+                          ? parseMessageContent(textContent, primaryColor)
+                          : textContent}
+                      </p>
+                    </div>
+                  </div>
+                  {message.role === "assistant" &&
+                   showRatingFor === message.id &&
+                   conversationId &&
+                   !hasRated && (
+                    <div className="mt-2 flex justify-start">
+                      <ConversationRating
+                        conversationId={conversationId}
+                        primaryColor={primaryColor}
+                        onRated={() => setHasRated(true)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-lg bg-white px-4 py-3 shadow-sm">
+                  <div className="flex gap-1">
+                    <span
+                      className="size-2 animate-bounce rounded-full"
+                      style={{ backgroundColor: primaryColor, animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="size-2 animate-bounce rounded-full"
+                      style={{ backgroundColor: primaryColor, animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="size-2 animate-bounce rounded-full"
+                      style={{ backgroundColor: primaryColor, animationDelay: "300ms" }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Suggestions - shown at bottom when no messages */}
+          {messages.length === 0 && (
+            <div className="mt-auto pt-4">
+              <div className="flex flex-wrap justify-end gap-2">
+                {defaultSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    disabled={isLoading}
+                    className="rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:shadow-md disabled:opacity-50"
+                    style={{
+                      ["--hover-bg" as string]: primaryColor,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = primaryColor
+                      e.currentTarget.style.color = "white"
+                      e.currentTarget.style.borderColor = primaryColor
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "white"
+                      e.currentTarget.style.color = "#374151"
+                      e.currentTarget.style.borderColor = "#e5e7eb"
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      {/* Input */}
-      <form onSubmit={onSubmit} className="border-t p-3">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Skriv en besked..."
-            className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none transition-colors focus:bg-white"
+      {/* Input area */}
+      <div className="border-t border-gray-100 bg-white px-4 pb-4 pt-2">
+        <p className="mb-2 text-center text-xs text-gray-400">
+          Powered by Easybot
+        </p>
+        <form onSubmit={onSubmit}>
+          <div
+            className="flex items-center gap-2 rounded-2xl border-2 border-gray-100 bg-white px-3 py-2 transition-colors focus-within:border-gray-300"
             style={{
               borderColor: inputValue ? primaryColor : undefined,
             }}
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !inputValue.trim()}
-            className="flex size-10 items-center justify-center rounded-full text-white transition-colors disabled:opacity-50"
-            style={{ backgroundColor: primaryColor }}
           >
-            <HugeiconsIcon icon={SentIcon} size={18} />
-          </button>
-        </div>
-        <p className="mt-2 text-center text-xs text-gray-400">
-          Powered by Easybot
-        </p>
-      </form>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Skriv en besked..."
+              className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !inputValue.trim()}
+              className="flex size-8 items-center justify-center rounded-lg transition-colors disabled:opacity-40"
+              style={{
+                backgroundColor: inputValue.trim() ? primaryColor : "transparent",
+                color: inputValue.trim() ? "white" : "#9ca3af"
+              }}
+            >
+              <HugeiconsIcon icon={SentIcon} size={18} />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
 
-// Page component med Suspense boundary
+// Page component with Suspense boundary
 export default function WidgetChatPage() {
   return (
     <Suspense fallback={<ChatLoading />}>
