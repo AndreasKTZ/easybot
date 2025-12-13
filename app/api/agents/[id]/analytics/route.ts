@@ -51,10 +51,10 @@ export async function GET(
     const [
       currentConvRes,
       previousConvRes,
-      currentRatingRes,
-      previousRatingRes,
-      currentLengthRes,
-      previousLengthRes,
+      currentRatingsRes,
+      previousRatingsRes,
+      currentLengthsRes,
+      previousLengthsRes,
       currentUsersRes,
       previousUsersRes,
       bucketRes,
@@ -72,38 +72,38 @@ export async function GET(
         .eq("agent_id", agentId)
         .gte("created_at", previousStart)
         .lt("created_at", currentStart),
+      // Get all ratings for current period to calculate average manually
       supabase
         .from("conversations")
-        .select("avg:avg(rating)")
+        .select("rating")
         .eq("agent_id", agentId)
         .gte("created_at", currentStart)
         .lte("created_at", currentEnd)
-        .not("rating", "is", null)
-        .maybeSingle(),
+        .not("rating", "is", null),
+      // Get all ratings for previous period
       supabase
         .from("conversations")
-        .select("avg:avg(rating)")
+        .select("rating")
         .eq("agent_id", agentId)
         .gte("created_at", previousStart)
         .lt("created_at", currentStart)
-        .not("rating", "is", null)
-        .maybeSingle(),
+        .not("rating", "is", null),
+      // Get all message counts for current period
       supabase
         .from("conversations")
-        .select("avg:avg(message_count)")
+        .select("message_count")
         .eq("agent_id", agentId)
         .gte("created_at", currentStart)
         .lte("created_at", currentEnd)
-        .gt("message_count", 0)
-        .maybeSingle(),
+        .gt("message_count", 0),
+      // Get all message counts for previous period
       supabase
         .from("conversations")
-        .select("avg:avg(message_count)")
+        .select("message_count")
         .eq("agent_id", agentId)
         .gte("created_at", previousStart)
         .lt("created_at", currentStart)
-        .gt("message_count", 0)
-        .maybeSingle(),
+        .gt("message_count", 0),
       supabase
         .from("conversations")
         .select("visitor_id")
@@ -138,8 +138,16 @@ export async function GET(
         ? ((currentConversations || 0) - previousConversations) / previousConversations * 100
         : 0
 
-    const currentAvgRating = Number(currentRatingRes.data?.avg ?? 0)
-    const previousAvgRating = Number(previousRatingRes.data?.avg ?? 0)
+    // Calculate average rating manually
+    const currentRatings = (currentRatingsRes.data || []) as Array<{ rating: number }>
+    const previousRatings = (previousRatingsRes.data || []) as Array<{ rating: number }>
+
+    const currentAvgRating = currentRatings.length > 0
+      ? currentRatings.reduce((sum, r) => sum + r.rating, 0) / currentRatings.length
+      : 0
+    const previousAvgRating = previousRatings.length > 0
+      ? previousRatings.reduce((sum, r) => sum + r.rating, 0) / previousRatings.length
+      : 0
 
     const satisfactionChange =
       previousAvgRating > 0
@@ -149,8 +157,16 @@ export async function GET(
     // Convert 5-star rating to percentage (multiply by 20)
     const satisfactionPercentage = Math.round(currentAvgRating * 20)
 
-    const currentAvgLength = Number(currentLengthRes.data?.avg ?? 0)
-    const previousAvgLength = Number(previousLengthRes.data?.avg ?? 0)
+    // Calculate average message count manually
+    const currentLengths = (currentLengthsRes.data || []) as Array<{ message_count: number }>
+    const previousLengths = (previousLengthsRes.data || []) as Array<{ message_count: number }>
+
+    const currentAvgLength = currentLengths.length > 0
+      ? currentLengths.reduce((sum, c) => sum + c.message_count, 0) / currentLengths.length
+      : 0
+    const previousAvgLength = previousLengths.length > 0
+      ? previousLengths.reduce((sum, c) => sum + c.message_count, 0) / previousLengths.length
+      : 0
 
     const lengthChange =
       previousAvgLength > 0

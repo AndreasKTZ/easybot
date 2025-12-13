@@ -18,7 +18,7 @@ import {
   MoreHorizontalIcon,
   Cancel01Icon,
   RefreshIcon,
-} from "@hugeicons-pro/core-bulk-rounded"
+} from "@hugeicons-pro/core-solid-rounded"
 import { ConversationRating } from "@/components/chat/conversation-rating"
 
 // Markdown-parsing for bold text and links
@@ -79,7 +79,7 @@ const iconComponents: Record<string, typeof AiBrain01Icon> = {
 
 // Default branding
 const defaultBranding = {
-  primary_color: "#0d9488",
+  primary_color: "#000000",
   icon_id: "ai-brain",
   icon_style: "bulk" as const,
   logo_url: null as string | null,

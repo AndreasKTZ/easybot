@@ -188,16 +188,18 @@ export default function AnalyticsPage() {
                 >
                   <HugeiconsIcon icon={stat.icon} size={20} strokeWidth={2} />
                 </div>
-                <div className="flex items-center gap-1 text-xs">
-                  {stat.trend === "up" ? (
-                    <HugeiconsIcon icon={ArrowUp02Icon} size={12} strokeWidth={2.25} className="text-success" />
-                  ) : (
-                    <HugeiconsIcon icon={ArrowDown02Icon} size={12} strokeWidth={2.25} className="text-destructive" />
-                  )}
-                  <span className={stat.trend === "up" ? "text-success font-medium" : "text-destructive font-medium"}>
-                    {Math.abs(stat.change)}%
-                  </span>
-                </div>
+                {stat.change !== 0 && (
+                  <div className="flex items-center gap-1 text-xs">
+                    {stat.trend === "up" ? (
+                      <HugeiconsIcon icon={ArrowUp02Icon} size={12} strokeWidth={2.25} className="text-success" />
+                    ) : (
+                      <HugeiconsIcon icon={ArrowDown02Icon} size={12} strokeWidth={2.25} className="text-destructive" />
+                    )}
+                    <span className={stat.trend === "up" ? "text-success font-medium" : "text-destructive font-medium"}>
+                      {Math.abs(stat.change)}%
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="mt-3">
                 <p className="text-2xl font-bold">{stat.value}</p>
