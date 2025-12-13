@@ -192,7 +192,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Right side - Testing zone (35%) */}
-      <div className="hidden lg:flex lg:w-[560px] xl:w-[600px] flex-col border-l border-border bg-sidebar">
+      <div className="hidden lg:flex lg:w-[460px] xl:w-[500px] flex-col border-l border-border bg-sidebar">
         {/* Testing zone header */}
         <div className="flex items-center gap-3 p-5 border-b border-dashed border-border">
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -206,7 +206,7 @@ export default function DashboardPage() {
 
         {/* Chat widget */}
         <div className="flex-1 flex flex-col min-h-0 p-4">
-          <Card className="flex flex-1 flex-col overflow-hidden">
+          <Card className="flex flex-1 flex-col overflow-hidden py-0 shadow-lg border-none">
             <CardContent className="flex min-h-0 flex-1 flex-col p-0">
               <ChatWidget
                 agentId={currentAgent.id}

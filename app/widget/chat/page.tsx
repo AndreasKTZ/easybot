@@ -87,9 +87,10 @@ const defaultBranding = {
 
 // Default suggestions (can be customized per agent in the future)
 const defaultSuggestions = [
-  "Hvad kan du hjælpe mig med?",
-  "Hvordan kommer jeg i gang?",
-  "Fortæl mig mere om jer",
+  "Hvor ser jeg jeres produkter?",
+  "Hvordan kan du hjælpe?",
+  "Kan man kontakte jer?",
+  "Kan man bestille online?",
 ]
 
 type AgentBranding = typeof defaultBranding
@@ -480,7 +481,7 @@ function WidgetChatContent() {
           {/* Suggestions - shown at bottom when no messages */}
           {messages.length === 0 && (
             <div className="mt-auto pt-4">
-              <div className="flex flex-wrap justify-end gap-2">
+              <div className="flex flex-row-reverse flex-wrap-reverse justify-start gap-2">
                 {defaultSuggestions.map((suggestion, index) => (
                   <button
                     key={index}
@@ -514,9 +515,6 @@ function WidgetChatContent() {
 
       {/* Input area */}
       <div className="border-t border-gray-100 bg-white px-4 pb-4 pt-2">
-        <p className="mb-2 text-center text-xs text-gray-400">
-          Powered by Easybot
-        </p>
         <form onSubmit={onSubmit}>
           <div
             className="flex items-center gap-2 rounded-2xl border-2 border-gray-100 bg-white px-3 py-2 transition-colors focus-within:border-gray-300"
