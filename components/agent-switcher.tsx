@@ -51,7 +51,7 @@ export function AgentSwitcher({
                 {currentAgent ? (
                   <>
                     <span className="font-semibold">{currentAgent.agent_name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs opacity-80">
                       {currentAgent.business_name}
                     </span>
                   </>
@@ -74,12 +74,12 @@ export function AgentSwitcher({
                 onClick={() => onAgentChange(agent)}
                 className="gap-2 py-2"
               >
-                <div className="flex size-6 items-center justify-center rounded bg-muted text-primary">
+                <div className="flex size-6 items-center justify-center rounded bg-accent-foreground text-primary">
                   <HugeiconsIcon icon={AiBrain01Icon} size={14} />
                 </div>
                 <div className="flex flex-1 flex-col">
                   <span className="font-medium">{agent.agent_name}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs opacity-80">
                     {agent.business_name}
                   </span>
                 </div>
@@ -92,7 +92,7 @@ export function AgentSwitcher({
             <DropdownMenuItem asChild>
               <Link href="/agents/new" className="gap-2 py-2">
                 <div className="flex size-6 items-center justify-center rounded border border-dashed">
-                  <HugeiconsIcon icon={Add01Icon} size={14} />
+                  <HugeiconsIcon icon={Add01Icon} size={14} className="hover:text-accent-foreground" />
                 </div>
                 <span>Opret ny agent</span>
               </Link>
