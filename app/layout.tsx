@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cabin, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -24,12 +25,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="da">
+    <html lang="da" suppressHydrationWarning>
       <body
         className={`${cabin.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        {children}
-        <Toaster position="bottom-right" />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <Toaster position="bottom-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

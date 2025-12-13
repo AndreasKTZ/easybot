@@ -396,9 +396,6 @@ export default function BrandingPage() {
                   </div>
                 </div>
               )}
-              <p className="mt-2 text-xs text-muted-foreground">
-                Logo gemmes i Supabase storage pr. agent.
-              </p>
             </div>
           </CardContent>
         </Card>

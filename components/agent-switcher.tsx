@@ -21,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { ChevronsUpDown } from "lucide-react"
 import { type Agent } from "@/lib/supabase/types"
 
 type AgentSwitcherProps = {
@@ -43,7 +44,7 @@ export function AgentSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg ">
                 <HugeiconsIcon icon={AiBrain01Icon} size={16} />
               </div>
               <div className="flex flex-1 flex-col gap-0.5 leading-none">
@@ -60,7 +61,7 @@ export function AgentSwitcher({
                   </span>
                 )}
               </div>
-              <HugeiconsIcon icon={ArrowDown01Icon} size={16} className="ml-auto" />
+              <ChevronsUpDown />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -73,7 +74,7 @@ export function AgentSwitcher({
                 onClick={() => onAgentChange(agent)}
                 className="gap-2 py-2"
               >
-                <div className="flex size-6 items-center justify-center rounded bg-primary/10 text-primary">
+                <div className="flex size-6 items-center justify-center rounded bg-muted text-primary">
                   <HugeiconsIcon icon={AiBrain01Icon} size={14} />
                 </div>
                 <div className="flex flex-1 flex-col">

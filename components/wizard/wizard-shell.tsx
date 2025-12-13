@@ -40,8 +40,8 @@ export function WizardShell({
   const isLastStep = currentStep === steps.length - 1
 
   return (
-    <div className="flex flex-1 flex-col bg-accent/30 p-4 lg:p-6">
-      <div className="mx-auto w-full max-w-5xl flex-1 space-y-4">
+    <div className="flex flex-1 flex-col bg-background p-4 lg:p-6">
+      <div className="flex flex-col mx-auto w-full max-w-5xl flex-1 space-y-4 justify-center items-left">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary w-fit">
             <HugeiconsIcon icon={SparklesIcon} size={14} />
@@ -49,7 +49,7 @@ export function WizardShell({
           </div>
         </div>
 
-        <Card className="overflow-hidden border-primary/10 pb-0">
+        <Card className="overflow-hidden border-border pb-0">
           <div className="grid gap-0 lg:grid-cols-[1fr,260px]">
             <div className="flex flex-col border-b lg:border-b-0 lg:border-r">
               <div className="text-xs font-medium text-muted-foreground px-5 py-3 lg:px-6">

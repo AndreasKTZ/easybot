@@ -4,13 +4,13 @@ import { useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   Link01Icon,
-  Add01Icon,
   Delete01Icon,
   Upload01Icon,
   File02Icon,
   Globe02Icon,
   File01Icon,
 } from "@hugeicons-pro/core-bulk-rounded"
+import { Add01Icon } from "@hugeicons-pro/core-solid-rounded"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -78,8 +78,8 @@ export function KnowledgeStep({
   return (
     <div className="space-y-6">
       {/* Info */}
-      <div className="rounded-lg bg-primary/5 px-3 py-2">
-        <p className="text-xs text-muted-foreground">
+      <div className="rounded-md bg-muted px-3 py-2">
+        <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">Valgfrit:</strong> Tilføj
           ressourcer din agent kan bruge. Du kan springe dette over.
         </p>
@@ -146,7 +146,7 @@ export function KnowledgeStep({
             />
           </div>
           <Button
-            variant="secondary"
+            variant="default"
             size="icon"
             className="size-8"
             onClick={addLink}

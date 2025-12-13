@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  ArrowUp01Icon,
-  ArrowDown01Icon,
+  ArrowUp02Icon,
+  ArrowDown02Icon,
   Message01Icon,
   SmileIcon,
   MessageMultiple01Icon,
   UserGroupIcon,
-} from "@hugeicons-pro/core-bulk-rounded"
+} from "@hugeicons-pro/core-stroke-rounded"
 import { Bar, BarChart, CartesianGrid, Rectangle, XAxis } from "recharts"
 import {
   Card,
@@ -147,30 +147,30 @@ export default function AnalyticsPage() {
       <div className="flex gap-2">
         <button
           onClick={() => setPeriod("today")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             period === "today"
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
           }`}
         >
           I dag
         </button>
         <button
           onClick={() => setPeriod("week")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             period === "week"
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
           }`}
         >
           Denne uge
         </button>
         <button
           onClick={() => setPeriod("month")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             period === "month"
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
           }`}
         >
           Denne måned
@@ -180,21 +180,19 @@ export default function AnalyticsPage() {
       {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
-          <Card key={stat.title} className={index === 0 ? "border-primary/20 bg-primary/5" : ""}>
+          <Card key={stat.title}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div
-                  className={`flex size-10 items-center justify-center rounded-xl ${
-                    index === 0 ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
-                  }`}
+                  className={`flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary`}
                 >
-                  <HugeiconsIcon icon={stat.icon} size={20} />
+                  <HugeiconsIcon icon={stat.icon} size={20} strokeWidth={2} />
                 </div>
                 <div className="flex items-center gap-1 text-xs">
                   {stat.trend === "up" ? (
-                    <HugeiconsIcon icon={ArrowUp01Icon} size={12} className="text-success" />
+                    <HugeiconsIcon icon={ArrowUp02Icon} size={12} strokeWidth={2.25} className="text-success" />
                   ) : (
-                    <HugeiconsIcon icon={ArrowDown01Icon} size={12} className="text-destructive" />
+                    <HugeiconsIcon icon={ArrowDown02Icon} size={12} strokeWidth={2.25} className="text-destructive" />
                   )}
                   <span className={stat.trend === "up" ? "text-success font-medium" : "text-destructive font-medium"}>
                     {Math.abs(stat.change)}%

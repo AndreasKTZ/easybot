@@ -5,13 +5,13 @@ import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ChartHistogramIcon,
-  SourceCodeIcon,
   File02Icon,
   Link01Icon,
   Message01Icon,
   AiBrain01Icon,
   TestTube01Icon,
 } from "@hugeicons-pro/core-bulk-rounded"
+import { SourceCodeIcon } from "@hugeicons-pro/core-solid-rounded"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -129,10 +129,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Embed CTA Card */}
-        <Card className="mb-8 border-primary/20 bg-primary/5">
+        <Card className="mb-8">
           <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <div className="flex w-12 h-12 size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <HugeiconsIcon icon={SourceCodeIcon} size={24} />
               </div>
               <div>
@@ -176,19 +176,23 @@ export default function DashboardPage() {
 
         {/* Scopes */}
         <div>
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Hjælper med</h3>
+          <h3 className="mb-4 text-lg font-semibold">Hjælper med</h3>
           <div className="flex flex-wrap gap-2">
             {currentAgent.scopes.map((scope) => (
-              <Badge key={scope} variant="secondary">
-                {scopeLabels[scope] || scope}
-              </Badge>
+              <div
+                key={scope}
+                className="group flex items-center gap-2 rounded-full border bg-card px-3 py-2 transition-all hover:border-primary/50 hover:bg-primary/5"
+              >
+                <div className="size-1.5 rounded-full bg-primary transition-transform group-hover:scale-125" />
+                <span className="text-sm font-medium">{scopeLabels[scope] || scope}</span>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
       {/* Right side - Testing zone (35%) */}
-      <div className="hidden lg:flex lg:w-[460px] xl:w-[500px] flex-col border-l-2 border-dashed border-border bg-muted/40">
+      <div className="hidden lg:flex lg:w-[560px] xl:w-[600px] flex-col border-l border-border bg-sidebar">
         {/* Testing zone header */}
         <div className="flex items-center gap-3 p-5 border-b border-dashed border-border">
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">

@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Tick02Icon, Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
+import { Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
+import { Tick02Icon } from "@hugeicons-pro/core-solid-rounded"
 import { Button } from "@/components/ui/button"
 import {
   Card,

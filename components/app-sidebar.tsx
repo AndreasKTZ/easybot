@@ -127,7 +127,7 @@ export function AppSidebar({ user, ...props }: Props) {
   }
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <AgentSwitcher
           agents={agents}
@@ -155,7 +155,7 @@ export function AppSidebar({ user, ...props }: Props) {
                           icon={isActive ? item.iconSolid : item.icon}
                           size={18}
                         />
-                        <span>{item.title}</span>
+                        <span className="text-md">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

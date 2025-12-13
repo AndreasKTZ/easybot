@@ -360,7 +360,7 @@ function SidebarSeparator({
   ...props
 }: React.ComponentProps<typeof Separator>) {
   return (
-    <div className="px-2">
+    <div>
       <Separator
         data-slot="sidebar-separator"
         data-sidebar="separator"

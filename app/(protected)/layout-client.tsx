@@ -3,7 +3,7 @@
 import type { User } from "@supabase/supabase-js"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
 import { AgentProvider } from "@/lib/agent-context"
 
 type Props = {
@@ -22,15 +22,15 @@ export function ProtectedLayoutClient({ children, user }: Props) {
           } as React.CSSProperties
         }
       >
-        <AppSidebar variant="inset" user={user} />
-        <SidebarInset>
+        <AppSidebar user={user} />
+        <main className="flex flex-1 flex-col">
           <SiteHeader />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               {children}
             </div>
           </div>
-        </SidebarInset>
+        </main>
       </SidebarProvider>
     </AgentProvider>
   )
