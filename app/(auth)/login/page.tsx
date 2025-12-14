@@ -1,5 +1,6 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ChatBotIcon, SparklesIcon } from "@hugeicons-pro/core-solid-rounded"
+import { SparklesIcon } from "@hugeicons-pro/core-solid-rounded"
+import { BotMessageSquareIcon } from "@/components/ui/bot-message-square"
 
 import { LoginForm } from "@/components/login-form"
 
@@ -9,9 +10,7 @@ export default function LoginPage() {
       <div className="flex flex-col gap-6 p-8 md:p-12">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="/" className="flex items-center gap-2.5 font-semibold text-lg">
-            <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-xl shadow-sm">
-              <HugeiconsIcon icon={ChatBotIcon} size={20} />
-            </div>
+            <BotMessageSquareIcon size={20} className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-xl shadow-sm" />
             <span>Easybot</span>
           </a>
         </div>

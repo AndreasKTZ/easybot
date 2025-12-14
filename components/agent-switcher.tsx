@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sidebar"
 import { ChevronsUpDown } from "lucide-react"
 import { type Agent } from "@/lib/supabase/types"
+import { BotMessageSquareIcon } from "@/components/ui/bot-message-square"
 
 type AgentSwitcherProps = {
   agents: Agent[]
@@ -44,9 +45,7 @@ export function AgentSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg ">
-                <HugeiconsIcon icon={AiBrain01Icon} size={16} />
-              </div>
+              <BotMessageSquareIcon size={18} className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg" />
               <div className="flex flex-1 flex-col gap-0.5 leading-none">
                 {currentAgent ? (
                   <>
@@ -74,9 +73,7 @@ export function AgentSwitcher({
                 onClick={() => onAgentChange(agent)}
                 className="gap-2 py-2"
               >
-                <div className="flex size-6 items-center justify-center rounded bg-accent-foreground text-primary">
-                  <HugeiconsIcon icon={AiBrain01Icon} size={14} />
-                </div>
+                <BotMessageSquareIcon size={16} className="flex size-6 items-center justify-center rounded bg-sidebar text-primary" />
                 <div className="flex flex-1 flex-col">
                   <span className="font-medium">{agent.agent_name}</span>
                   <span className="text-xs opacity-80">
