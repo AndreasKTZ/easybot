@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="da" suppressHydrationWarning>
       <body
-        className={`${cabin.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${cabin.variable} ${geistMono.variable} font-sans antialiased selection:bg-primary selection:text-primary-foreground`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}

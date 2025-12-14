@@ -58,13 +58,13 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className="rounded-lg text-foreground">
                   {initials || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
+                <span className="truncate text-xs opacity-80">
                   {user.email}
                 </span>
               </div>
@@ -81,13 +81,13 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
+                  <AvatarFallback className="rounded-lg text-foreground">
                     {initials || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-xs opacity-80">
                     {user.email}
                   </span>
                 </div>
@@ -96,21 +96,21 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <HugeiconsIcon icon={UserCircleIcon} size={16} />
+                <HugeiconsIcon icon={UserCircleIcon} size={16} className="hover:text-accent-foreground" />
                 Konto
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <HugeiconsIcon icon={CreditCardIcon} size={16} />
+                <HugeiconsIcon icon={CreditCardIcon} size={16} className="hover:text-accent-foreground" />
                 Abonnement
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <HugeiconsIcon icon={Notification02Icon} size={16} />
+                <HugeiconsIcon icon={Notification02Icon} size={16} className="hover:text-accent-foreground" />
                 Notifikationer
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>
-              <HugeiconsIcon icon={Logout01Icon} size={16} />
+              <HugeiconsIcon icon={Logout01Icon} size={16} className="hover:text-accent-foreground" />
               Log ud
             </DropdownMenuItem>
           </DropdownMenuContent>
