@@ -236,3 +236,39 @@ alter table public.clustered_messages enable row level security;
 create policy "Users can view clustered messages"
   on public.clustered_messages for select
   using (true);
+
+-- Knowledge custom entries (brugerdefineret information)
+create table if not exists public.knowledge_custom (
+  id uuid primary key default gen_random_uuid(),
+  agent_id uuid references public.agents(id) on delete cascade not null,
+  title text not null,
+  content text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists knowledge_custom_agent_id_idx on public.knowledge_custom(agent_id);
+
+alter table public.knowledge_custom enable row level security;
+
+-- Policies for knowledge_custom
+create policy "Users can view own agent custom entries"
+  on public.knowledge_custom for select
+  using (agent_id in (select id from public.agents where user_id = auth.uid()));
+
+create policy "Users can create custom entries for own agents"
+  on public.knowledge_custom for insert
+  with check (agent_id in (select id from public.agents where user_id = auth.uid()));
+
+create policy "Users can update own agent custom entries"
+  on public.knowledge_custom for update
+  using (agent_id in (select id from public.agents where user_id = auth.uid()));
+
+create policy "Users can delete own agent custom entries"
+  on public.knowledge_custom for delete
+  using (agent_id in (select id from public.agents where user_id = auth.uid()));
+
+-- Trigger for updated_at on knowledge_custom
+create trigger knowledge_custom_updated_at
+  before update on public.knowledge_custom
+  for each row execute function public.handle_updated_at();

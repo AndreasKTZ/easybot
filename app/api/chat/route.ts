@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google"
 import { streamText, convertToModelMessages } from "ai"
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { Agent, KnowledgeLink, KnowledgeDocument } from "@/lib/supabase/types"
+import type { Agent, KnowledgeLink, KnowledgeDocument, KnowledgeCustom } from "@/lib/supabase/types"
 
 // Tillad streaming responses op til 30 sekunder
 export const maxDuration = 30
@@ -79,11 +79,11 @@ SPROG, TONE OG SVARFORMAT
   - Vær hverken for formel eller for uformel – tilpas dig EasyBot’s brand.
 
 6) Struktur i svar
-- Start med et kort, direkte svar på spørgsmålet.
-- Uddyb derefter med forklaring eller trin-for-trin vejledning (hvis det er relevant).
-- Brug gerne punktopstilling, når det gør svaret lettere at overskue.
-- Afslut ofte med et lille, hjælpsomt opfølgende spørgsmål som fx:
-  “Giver det mening?” eller “Vil du høre mere om dine muligheder?”.
+- Giv komplette svar, der fuldt ud besvarer spørgsmålet, men undgå unødvendigt fyld.
+- Start med et direkte svar på spørgsmålet.
+- Uddyb med relevant forklaring eller trin-for-trin vejledning, når det hjælper brugeren.
+- Brug punktopstilling, når det gør svaret lettere at overskue.
+- Afslut med et opfølgende spørgsmål, når det er naturligt og hjælpsomt.
 
 ================================
 VIDEN, LINKS OG DOKUMENTER
@@ -244,6 +244,14 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
 
         const documents = (documentsData || []) as unknown as KnowledgeDocument[]
 
+        // Hent brugerdefineret viden
+        const { data: customData } = await supabase
+          .from("knowledge_custom")
+          .select("*")
+          .eq("agent_id", agentId)
+
+        const customEntries = (customData || []) as unknown as KnowledgeCustom[]
+
         // Byg system prompt baseret på agent konfiguration
         const scopeBulletList = agent.scopes.length
           ? agent.scopes
@@ -261,6 +269,11 @@ Du må nu begynde at svare brugeren ud fra disse regler, virksomhedens kontekst 
         const documentSummaries = docsWithSummary.length
           ? docsWithSummary.map(doc => `**${doc.name}:**\n${doc.summary}`).join("\n\n")
           : "- Ingen dokument-resuméer tilgængelige."
+
+        // Byg brugerdefineret viden
+        const customKnowledge = customEntries.length
+          ? customEntries.map(entry => `**${entry.title}:**\n${entry.content}`).join("\n\n")
+          : ""
         
         const escalationInstructions = `Kontakt kundeservice hos ${agent.business_name} for videre hjælp.`
 
@@ -305,11 +318,11 @@ SPROG, TONE OG SVARFORMAT
   - Vær hverken for formel eller for uformel – tilpas dig ${agent.business_name}'s brand.
 
 6) Struktur i svar
-- Start med et kort, direkte svar på spørgsmålet.
-- Uddyb derefter med forklaring eller trin-for-trin vejledning (hvis det er relevant).
-- Brug gerne punktopstilling, når det gør svaret lettere at overskue.
-- Afslut ofte med et lille, hjælpsomt opfølgende spørgsmål som fx:
-  “Giver det mening?” eller “Vil du høre mere om dine muligheder?”.
+- Giv komplette svar, der fuldt ud besvarer spørgsmålet, men undgå unødvendigt fyld.
+- Start med et direkte svar på spørgsmålet.
+- Uddyb med relevant forklaring eller trin-for-trin vejledning, når det hjælper brugeren.
+- Brug punktopstilling, når det gør svaret lettere at overskue.
+- Afslut med et opfølgende spørgsmål, kun hvis det er naturligt og hjælpsomt.
 
 ================================
 VIDEN, LINKS OG DOKUMENTER
@@ -320,7 +333,10 @@ ${linksBulletList}
 
 - Du har også adgang til følgende korte beskrivelser/resuméer af virksomhedens dokumenter:
 ${documentSummaries}
-
+${customKnowledge ? `
+- Du har også adgang til følgende brugerdefinerede information:
+${customKnowledge}
+` : ""}
 8) Sådan bruger du viden
 - Brug først virksomhedens egne links og dokumenter som kilde, når de er relevante.
 - Hvis du svarer på baggrund af antagelser eller generel viden, gør det tydeligt for brugeren.

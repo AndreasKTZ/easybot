@@ -55,6 +55,15 @@ export type KnowledgeDocument = {
   created_at: string
 }
 
+export type KnowledgeCustom = {
+  id: string
+  agent_id: string
+  title: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
 export type Conversation = {
   id: string
   agent_id: string
@@ -108,6 +117,11 @@ export type Database = {
         Row: KnowledgeDocument
         Insert: Omit<KnowledgeDocument, "id" | "created_at">
         Update: Partial<Omit<KnowledgeDocument, "id" | "created_at">>
+      }
+      knowledge_custom: {
+        Row: KnowledgeCustom
+        Insert: Omit<KnowledgeCustom, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<KnowledgeCustom, "id" | "created_at" | "updated_at">>
       }
       conversations: {
         Row: Conversation

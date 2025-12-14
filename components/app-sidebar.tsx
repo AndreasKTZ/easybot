@@ -13,6 +13,7 @@ import {
   Home01Icon,
   Link01Icon,
   Message01Icon,
+  Note01Icon,
   Settings01Icon,
   PaintBrushIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
@@ -24,6 +25,7 @@ import {
   Home01Icon as Home01IconSolid,
   Link01Icon as Link01IconSolid,
   Message01Icon as Message01IconSolid,
+  Note01Icon as Note01IconSolid,
   Settings01Icon as Settings01IconSolid,
   PaintBrushIcon as PaintBrushIconSolid,
 } from "@hugeicons-pro/core-solid-rounded"
@@ -80,6 +82,12 @@ export function AppSidebar({ user, ...props }: Props) {
       url: "/dashboard/knowledge/documents",
       icon: File02Icon,
       iconSolid: File02IconSolid,
+    },
+    {
+      title: "Tilpasset viden",
+      url: "/dashboard/knowledge/custom",
+      icon: Note01Icon,
+      iconSolid: Note01IconSolid,
     },
   ]
 

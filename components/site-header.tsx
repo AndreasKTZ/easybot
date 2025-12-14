@@ -15,6 +15,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/analytics": "Analytics",
   "/dashboard/knowledge/links": "Links",
   "/dashboard/knowledge/documents": "Dokumenter",
+  "/dashboard/knowledge/custom": "Tilpasset viden",
   "/dashboard/settings/tone": "Tone og stemme",
   "/dashboard/settings/branding": "Branding",
   "/dashboard/settings/info": "Grundinfo",
