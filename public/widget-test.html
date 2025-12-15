@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="da">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,66 +13,80 @@
       background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
       min-height: 100vh;
     }
+
     .container {
       max-width: 800px;
       margin: 0 auto;
     }
+
     h1 {
       color: #1a1a2e;
       margin-bottom: 10px;
     }
+
     p {
       color: #4a4a68;
       line-height: 1.6;
     }
+
     .card {
       background: white;
       border-radius: 12px;
       padding: 24px;
       margin-top: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
+
     .card h2 {
       margin-top: 0;
       color: #1a1a2e;
     }
+
     .placeholder {
       background: #f0f0f0;
       border-radius: 8px;
       height: 20px;
       margin: 8px 0;
     }
-    .placeholder.short { width: 60%; }
-    .placeholder.medium { width: 80%; }
+
+    .placeholder.short {
+      width: 60%;
+    }
+
+    .placeholder.medium {
+      width: 80%;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Velkommen til vores hjemmeside</h1>
-    <p>Dette er en testside for Easybot widget embed. Klik på chat-ikonet i nederste højre hjørne for at teste chatbotten.</p>
-    
+    <p>Dette er en testside for Easybot widget embed. Klik på chat-ikonet i nederste højre hjørne for at teste
+      chatbotten.</p>
+
     <div class="card">
       <h2>Om os</h2>
       <div class="placeholder medium"></div>
       <div class="placeholder"></div>
       <div class="placeholder short"></div>
     </div>
-    
+
     <div class="card">
       <h2>Vores services</h2>
       <div class="placeholder"></div>
       <div class="placeholder medium"></div>
       <div class="placeholder short"></div>
     </div>
-    
+
     <div class="card">
       <h2>Kontakt</h2>
       <p>Brug vores chatbot til at få hurtig hjælp!</p>
     </div>
   </div>
 
-  <!-- Easybot Widget -->
+  <!-- Easybot Widget (Brug "npm run dev" og åbn http://localhost:3000/widget-test.html) -->
   <script src="http://localhost:3000/widget.js?agent=test-agent-id"></script>
 </body>
-</html>
 
+</html>

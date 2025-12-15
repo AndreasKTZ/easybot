@@ -1,4 +1,4 @@
-// Simpelt layout til widget iframe – ingen sidebar eller navigation
+// Simpelt layout til widget iframe
 export default function WidgetLayout({
   children,
 }: {

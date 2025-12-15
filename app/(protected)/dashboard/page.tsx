@@ -191,7 +191,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Testing zone - right side on desktop, bottom on mobile */}
+      {/* Testing zone */}
       <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-border bg-sidebar lg:w-[460px] xl:w-[500px]">
         {/* Testing zone header */}
         <div className="flex items-center gap-3 p-4 lg:p-5 border-b border-dashed border-border">

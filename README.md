@@ -1,4 +1,4 @@
-# EasyBot 🤖
+# EasyBot
 
 ## Introduktion
 
@@ -335,11 +335,11 @@ const { data: agent } = await supabase
 
 ## Fremtidige forbedringer
 
-Her er en liste af planlagte features der ville tage projektet til næste niveau:
+Her er en liste af features der ville tage projektet til næste niveau:
 
 ### 1. Betalingsintegration (Stripe API)
 
-- **Subscription plans**: Free, Pro, Enterprise tiers
+- **Subscription plans**: Starter, Pro, Enterprise tiers
 - **Begrænsninger pr. plan**: Antal agenter, beskeder pr. måned, storage
 - **Betalingshistorik**: Dashboard til at se fakturaer og betalinger
 
@@ -354,7 +354,6 @@ Her er en liste af planlagte features der ville tage projektet til næste niveau
 ### 3. Avanceret Analytics Dashboard
 
 - **A/B testing**: Test forskellige tones og prompts for at se hvad der virker bedst
-- **Sentiment analysis**: Analyser om brugere er frustrerede eller tilfredse
 - **Conversion tracking**: Spor om chatbot-samtaler fører til salg/leads
 - **Heatmaps**: Visualiser hvornår på dagen chatbotten bruges mest
 - **Export til CSV/PDF**: Download analytics rapporter
@@ -377,10 +376,3 @@ Her er en liste af planlagte features der ville tage projektet til næste niveau
 - **Fine-tuning**: Brug historiske samtaler til at fine-tune modeller
 - **Feedback loop**: Lad agenten lære af ratings og korrigeringer
 - **Suggested responses**: Foreslå svar baseret på tidligere succesfulde samtaler
-
-### 7. Compliance & Sikkerhed
-
-- **GDPR tools**: Data eksport, sletning på forespørgsel
-- **Audit logs**: Spor alle ændringer til agenter
-- **2FA**: Two-factor authentication til admin-brugere
-- **IP whitelisting**: Begræns adgang til specifikke IP-adresser
