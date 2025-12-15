@@ -118,7 +118,7 @@ export async function GET(
         .lt("created_at", currentStart),
       supabase
         .from("conversations")
-        .select("created_at")
+        .select("created_at, visitor_id")
         .eq("agent_id", agentId)
         .gte("created_at", currentStart)
         .lte("created_at", currentEnd),
@@ -191,17 +191,26 @@ export async function GET(
       if (period === "today") {
         const bucketArr = Array.from({ length: 24 }, (_, hour) => ({
           label: hour.toString().padStart(2, "0"),
-          value: 0,
+          conversations: 0,
+          uniqueUsers: 0,
+          _visitors: new Set<string>(),
         }))
 
-        rows.forEach((row: { created_at: string }) => {
+        rows.forEach((row: { created_at: string; visitor_id: string | null }) => {
           const hour = new Date(row.created_at).getHours()
           if (hour >= 0 && hour < 24) {
-            bucketArr[hour].value += 1
+            bucketArr[hour].conversations += 1
+            if (row.visitor_id) {
+              bucketArr[hour]._visitors.add(row.visitor_id)
+            }
           }
         })
 
-        return bucketArr
+        return bucketArr.map(({ label, conversations, _visitors }) => ({
+          label,
+          conversations,
+          uniqueUsers: _visitors.size,
+        }))
       }
 
       if (period === "week") {
@@ -210,18 +219,27 @@ export async function GET(
         const daysOfWeek = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"]
         const bucketArr = Array.from({ length: 7 }, (_, idx) => ({
           label: daysOfWeek[idx],
-          value: 0,
+          conversations: 0,
+          uniqueUsers: 0,
+          _visitors: new Set<string>(),
         }))
 
-        rows.forEach((row: { created_at: string }) => {
+        rows.forEach((row: { created_at: string; visitor_id: string | null }) => {
           const day = new Date(row.created_at)
           const diff = Math.floor((day.getTime() - start.getTime()) / MS_PER_DAY)
           if (diff >= 0 && diff < 7) {
-            bucketArr[diff].value += 1
+            bucketArr[diff].conversations += 1
+            if (row.visitor_id) {
+              bucketArr[diff]._visitors.add(row.visitor_id)
+            }
           }
         })
 
-        return bucketArr
+        return bucketArr.map(({ label, conversations, _visitors }) => ({
+          label,
+          conversations,
+          uniqueUsers: _visitors.size,
+        }))
       }
 
       // month (day buckets)
@@ -233,18 +251,27 @@ export async function GET(
 
       const bucketArr = Array.from({ length: daysInRange }, (_, idx) => ({
         label: (idx + 1).toString(),
-        value: 0,
+        conversations: 0,
+        uniqueUsers: 0,
+        _visitors: new Set<string>(),
       }))
 
-      rows.forEach((row: { created_at: string }) => {
+      rows.forEach((row: { created_at: string; visitor_id: string | null }) => {
         const day = new Date(row.created_at)
         const diff = Math.floor((day.getTime() - start.getTime()) / MS_PER_DAY)
         if (diff >= 0 && diff < daysInRange) {
-          bucketArr[diff].value += 1
+          bucketArr[diff].conversations += 1
+          if (row.visitor_id) {
+            bucketArr[diff]._visitors.add(row.visitor_id)
+          }
         }
       })
 
-      return bucketArr
+      return bucketArr.map(({ label, conversations, _visitors }) => ({
+        label,
+        conversations,
+        uniqueUsers: _visitors.size,
+      }))
     })()
 
     const topQuestions = topClustersRes.data?.map((cluster: { representative_question: string; question_count: number }) => ({

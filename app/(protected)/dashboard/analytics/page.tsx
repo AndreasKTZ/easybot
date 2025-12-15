@@ -10,7 +10,7 @@ import {
   MessageMultiple01Icon,
   UserGroupIcon,
 } from "@hugeicons-pro/core-stroke-rounded"
-import { Bar, BarChart, CartesianGrid, Rectangle, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/card"
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -35,7 +37,7 @@ type AnalyticsData = {
     avgConversationLength: { value: number; change: number; trend: "up" | "down" }
     uniqueUsers: { value: number; change: number; trend: "up" | "down" }
   }
-  buckets: Array<{ label: string; value: number }>
+  buckets: Array<{ label: string; conversations: number; uniqueUsers: number }>
   topQuestions: Array<{ question: string; count: number }>
 }
 
@@ -120,19 +122,22 @@ export default function AnalyticsPage() {
   ]
 
   const buckets = data.buckets || []
-  const bucketValues = buckets.map((b) => Number(b.value) || 0)
+  const bucketValues = buckets.map((b) => (Number(b.conversations) || 0) + (Number(b.uniqueUsers) || 0))
   const maxBucketValue = Math.max(...bucketValues, 0)
   const hasBucketData = maxBucketValue > 0
   const chartTitle =
-    period === "today" ? "Samtaler i dag" : period === "week" ? "Samtaler denne uge" : "Samtaler denne måned"
-  const chartDescription = period === "today" ? "Antal samtaler per time" : "Antal samtaler per dag"
+    period === "today" ? "Aktivitet i dag" : period === "week" ? "Aktivitet denne uge" : "Aktivitet denne måned"
+  const chartDescription = period === "today" ? "Samtaler og brugere per time" : "Samtaler og brugere per dag"
   const chartConfig: ChartConfig = {
     conversations: {
       label: "Samtaler",
-      color: "var(--color-primary)",
+      color: "var(--chart-4)",
+    },
+    uniqueUsers: {
+      label: "Unikke brugere",
+      color: "var(--chart-2)",
     },
   }
-  const minimalBarHeight = 6
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
@@ -147,31 +152,28 @@ export default function AnalyticsPage() {
       <div className="flex gap-2">
         <button
           onClick={() => setPeriod("today")}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            period === "today"
-              ? "bg-primary text-primary-foreground"
-              : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
-          }`}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${period === "today"
+            ? "bg-primary text-primary-foreground"
+            : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
+            }`}
         >
           I dag
         </button>
         <button
           onClick={() => setPeriod("week")}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            period === "week"
-              ? "bg-primary text-primary-foreground"
-              : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
-          }`}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${period === "week"
+            ? "bg-primary text-primary-foreground"
+            : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
+            }`}
         >
           Denne uge
         </button>
         <button
           onClick={() => setPeriod("month")}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            period === "month"
-              ? "bg-primary text-primary-foreground"
-              : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
-          }`}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${period === "month"
+            ? "bg-primary text-primary-foreground"
+            : "bg-background border border-border text-muted-foreground hover:bg-muted/80"
+            }`}
         >
           Denne måned
         </button>
@@ -224,43 +226,34 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <ChartContainer config={chartConfig} className="max-h-[300px] w-full">
-                <BarChart data={buckets}>
+                <BarChart accessibilityLayer data={buckets}>
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="label"
                     tickLine={false}
                     axisLine={false}
-                    tickMargin={8}
+                    tickMargin={10}
                     interval={0}
                     minTickGap={8}
                     tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   />
-                  <ChartTooltip content={<ChartTooltipContent labelKey="label" nameKey="conversations" />} />
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <ChartLegend content={<ChartLegendContent />} />
                   <Bar
-                    dataKey="value"
+                    dataKey="uniqueUsers"
+                    stackId="a"
+                    fill="var(--color-uniqueUsers)"
+                    radius={[0, 0, 4, 4]}
+                    animationBegin={0}
+                    animationDuration={400}
+                  />
+                  <Bar
+                    dataKey="conversations"
+                    stackId="a"
                     fill="var(--color-conversations)"
-                    radius={8}
-                    shape={(props: any) => {
-                      const { x, y, width, height, fill } = props as {
-                        x: number
-                        y: number
-                        width: number
-                        height: number
-                        fill: string
-                      }
-                      const h = Math.max(height, minimalBarHeight)
-                      const yAdjusted = y - (h - height)
-                      return (
-                        <Rectangle
-                          x={x}
-                          y={yAdjusted}
-                          width={width}
-                          height={h}
-                          radius={[8, 8, 0, 0]}
-                          fill={fill}
-                        />
-                      )
-                    }}
+                    radius={[4, 4, 0, 0]}
+                    animationBegin={400}
+                    animationDuration={600}
                   />
                 </BarChart>
               </ChartContainer>
