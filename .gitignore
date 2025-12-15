@@ -44,6 +44,3 @@ next-env.d.ts
 /.cursor/
 /.github/
 CLAUDE.local.md
-
-# Hugeicons
-.npmrc
