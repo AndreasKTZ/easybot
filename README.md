@@ -19,10 +19,12 @@ Projektet er udviklet som et skoleprojekt og demonstrerer webudvikling med moder
 ## Tech Stack
 
 ### Frontend
-- **Next.js 16.0.7** (App Router) - React-framework
-- **React 19.2.0** - UI-bibliotek
-- **TypeScript 5** - Type-sikkerhed
-- **Tailwind CSS 4** - Utility-first CSS framework
+- **Next.js 16.0.7**
+- **React 19.2.0**
+- **TypeScript 5**
+- **Tailwind CSS 4**
+- **Recharts 2.15**
+- **Motion 12**
 
 ### Backend & Database
 - **Supabase** - PostgreSQL database med indbygget authentication og storage
@@ -30,13 +32,15 @@ Projektet er udviklet som et skoleprojekt og demonstrerer webudvikling med moder
 - **Supabase Auth** - JWT-baseret autentificering med Row-Level Security
 
 ### AI & Chat
-- **Vercel AI SDK** (@ai-sdk/react, @ai-sdk/google) - Framework til AI-streaming
+- **Vercel AI SDK 5** (@ai-sdk/react, @ai-sdk/google) - Framework til AI-streaming
 - **Google Gemini 2.5 Flash** - Large Language Model (LLM)
 - **pdf-parse** - PDF-dokumentparsing
 
-### Development Tools
-- **ESLint 9** - Code linting
-- **Zod** - Schema validering
+### UI Components
+- **shadcn/ui** - UI-komponenter
+- **Lucide React** - Ikonbibliotek
+- **Hugeicons Pro** - Premium ikonbibliotek
+- **Sonner** - Toast notifications
 
 ## Installation & Setup
 
@@ -127,11 +131,15 @@ easybot/
 │   │   │   ├── new/page.tsx      # Opret ny agent (wizard)
 │   │   │   └── [id]/embed/page.tsx  # Embed-kode generator
 │   │   │
-│   │   └── layout.tsx            # Protected layout med sidebar
+│   │   ├── layout.tsx            # Protected layout med sidebar
+│   │   └── layout-client.tsx     # Client-side layout wrapper
 │   │
 │   ├── widget/                   # Offentlig chat widget
 │   │   ├── chat/page.tsx         # Full-page chat widget
 │   │   └── layout.tsx
+│   │
+│   ├── widget.js/                # Embed widget script
+│   │   └── route.ts
 │   │
 │   ├── api/                      # Backend API routes
 │   │   ├── chat/route.ts         # Hovedchat endpoint (AI streaming)
@@ -140,10 +148,10 @@ easybot/
 │   │   │   └── [id]/
 │   │   │       ├── route.ts      # GET/PATCH/DELETE agent
 │   │   │       ├── analytics/route.ts
+│   │   │       ├── branding/     # Logo upload
 │   │   │       └── knowledge/
 │   │   │           ├── documents/route.ts
-│   │   │           ├── links/route.ts
-│   │   │           └── branding/logo/route.ts
+│   │   │           └── links/route.ts
 │   │   │
 │   │   ├── conversations/        # Samtale-håndtering
 │   │   │   ├── latest/route.ts
@@ -179,6 +187,9 @@ easybot/
 │   ├── app-sidebar.tsx           # Hovednavigation sidebar
 │   ├── agent-switcher.tsx        # Agent dropdown selector
 │   ├── chat-widget.tsx           # Embedbar chat widget
+│   ├── nav-user.tsx              # User navigation med logout
+│   ├── site-header.tsx           # Header komponent
+│   ├── theme-toggle.tsx          # Dark/light mode toggle
 │   ├── login-form.tsx
 │   └── signup-form.tsx
 │
@@ -202,8 +213,6 @@ easybot/
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
-├── tailwind.config.ts
-├── postcss.config.mjs
 └── .env.local
 ```
 
@@ -271,7 +280,28 @@ Når en bruger uploader en PDF eller TXT-dokument:
 
 Dette gør det muligt for chatbotten at besvare spørgsmål baseret på virksomhedens egne dokumenter.
 
-### 5. Analytics Clustering (`app/api/analytics/cluster-questions/route.ts`)
+### 5. Analytics Dashboard (`app/(protected)/dashboard/analytics/page.tsx`)
+
+Analytics-dashboardet giver indsigt i chatbot-performance:
+
+**Stat Cards:**
+- Samtaler (med trend-indikator)
+- Tilfredshed (gennemsnitlig rating i %)
+- Samtalelængde (gennemsnitlige beskeder)
+- Unikke brugere
+
+**Stacked Bar Chart:**
+- Visualiserer aktivitet over tid med Recharts
+- Viser både **samtaler** og **unikke brugere** som stacked bars
+- Sekventiel animation: brugere animerer først, derefter samtaler
+- Periodevalg: I dag (per time), Denne uge (per dag), Denne måned (per dag)
+- Interaktiv tooltip og legend
+
+**Top Spørgsmål:**
+- AI-clustered spørgsmål grupperet efter tema
+- Hjælper med at identificere FAQ-mønstre
+
+### 6. Analytics Clustering (`app/api/analytics/cluster-questions/route.ts`)
 
 Bruger AI til at gruppere lignende spørgsmål fra brugere:
 
@@ -282,7 +312,7 @@ Bruger AI til at gruppere lignende spørgsmål fra brugere:
 
 Dette hjælper virksomheder med at forstå hvad deres kunder oftest spørger om.
 
-### 6. Row-Level Security (Supabase RLS)
+### 7. Row-Level Security (Supabase RLS)
 
 Hver SQL-tabel har RLS-policies der sikrer at:
 

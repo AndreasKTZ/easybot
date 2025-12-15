@@ -131,11 +131,11 @@ export default function AnalyticsPage() {
   const chartConfig: ChartConfig = {
     conversations: {
       label: "Samtaler",
-      color: "var(--chart-4)",
+      color: "var(--chart-3)",
     },
     uniqueUsers: {
       label: "Unikke brugere",
-      color: "var(--chart-2)",
+      color: "var(--chart-4)",
     },
   }
 

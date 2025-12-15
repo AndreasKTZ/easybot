@@ -8,7 +8,7 @@ import {
   UserCircleIcon,
 } from "@hugeicons-pro/core-bulk-rounded"
 import {
-    MoreVerticalIcon,
+  MoreVerticalIcon,
 } from "@hugeicons-pro/core-stroke-rounded"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -31,12 +31,14 @@ import { signOut } from "@/lib/supabase/actions"
 
 export function NavUser({
   user,
+  onComingSoon,
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  onComingSoon?: (title: string) => void
 }) {
   const { isMobile } = useSidebar()
 
@@ -46,6 +48,10 @@ export function NavUser({
     .join("")
     .slice(0, 2)
     .toUpperCase()
+
+  const handleComingSoon = (title: string) => {
+    onComingSoon?.(title)
+  }
 
   return (
     <SidebarMenu>
@@ -95,15 +101,15 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleComingSoon("Konto")}>
                 <HugeiconsIcon icon={UserCircleIcon} size={16} className="hover:text-accent-foreground" />
                 Konto
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleComingSoon("Abonnement")}>
                 <HugeiconsIcon icon={CreditCardIcon} size={16} className="hover:text-accent-foreground" />
                 Abonnement
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleComingSoon("Notifikationer")}>
                 <HugeiconsIcon icon={Notification02Icon} size={16} className="hover:text-accent-foreground" />
                 Notifikationer
               </DropdownMenuItem>

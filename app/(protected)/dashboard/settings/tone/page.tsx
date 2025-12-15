@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Loading03Icon } from "@hugeicons-pro/core-bulk-rounded"
@@ -17,28 +17,49 @@ import { cn } from "@/lib/utils"
 import { useAgent } from "@/lib/agent-context"
 import type { AgentTone } from "@/lib/supabase/types"
 
-const toneLabels: Record<AgentTone, string> = {
-  friendly: "Venlig og uformel",
-  professional: "Rolig og professionel",
-  direct: "Kort og direkte",
-  educational: "Forklarende og pædagogisk",
-}
+const toneOptions: {
+  id: AgentTone
+  emoji: string
+  label: string
+  description: string
+  example: string
+}[] = [
+    {
+      id: "friendly",
+      emoji: "😊",
+      label: "Venlig og uformel",
+      description: "Afslappet og imødekommende. Bruger emoji og uformelt sprog.",
+      example: "Hej! 👋 Hvad kan jeg hjælpe dig med i dag?",
+    },
+    {
+      id: "professional",
+      emoji: "👔",
+      label: "Rolig og professionel",
+      description: "Høflig og saglig. Holder en neutral og troværdig tone.",
+      example: "Goddag. Hvordan kan jeg være behjælpelig?",
+    },
+    {
+      id: "direct",
+      emoji: "⚡",
+      label: "Kort og direkte",
+      description: "Kommer hurtigt til sagen. Korte, præcise svar uden fyld.",
+      example: "Hej. Hvad drejer det sig om?",
+    },
+    {
+      id: "educational",
+      emoji: "📚",
+      label: "Forklarende og pædagogisk",
+      description: "Forklarer tingene grundigt. God til komplekse emner.",
+      example: "Velkommen! Lad mig guide dig igennem dine muligheder.",
+    },
+  ]
 
-const toneDescriptions: Record<AgentTone, string> = {
-  friendly: "Afslappet og imødekommende. Bruger emoji og uformelt sprog.",
-  professional: "Høflig og saglig. Holder en neutral og troværdig tone.",
-  direct: "Kommer hurtigt til sagen. Korte, præcise svar uden fyld.",
-  educational: "Forklarer tingene grundigt. God til komplekse emner.",
+const previewResponses: Record<AgentTone, string> = {
+  friendly: "Hej! 😊 Vi har åbent mandag til fredag kl. 9-17. Er der andet jeg kan hjælpe med?",
+  professional: "Vores åbningstider er mandag-fredag kl. 9:00-17:00. Du er velkommen til at kontakte os inden for disse tider.",
+  direct: "Man-fre, 9-17.",
+  educational: "Vi har åbent i hverdagene fra kl. 9 til 17. Det betyder at du kan nå os alle arbejdsdage. I weekenden er vi desværre lukket, men du kan skrive til os her, så svarer vi mandag morgen.",
 }
-
-const toneExamples: Record<AgentTone, string> = {
-  friendly: '"Hej! 👋 Hvad kan jeg hjælpe dig med i dag?"',
-  professional: '"Goddag. Hvordan kan jeg være behjælpelig?"',
-  direct: '"Hej. Hvad drejer det sig om?"',
-  educational: '"Velkommen! Lad mig guide dig igennem dine muligheder."',
-}
-
-const toneOptions: AgentTone[] = ["friendly", "professional", "direct", "educational"]
 
 export default function TonePage() {
   const { currentAgent, updateAgent } = useAgent()
@@ -46,6 +67,13 @@ export default function TonePage() {
     currentAgent?.tone ?? "friendly"
   )
   const [saving, setSaving] = useState(false)
+
+  // Sync with currentAgent when it changes
+  useEffect(() => {
+    if (currentAgent?.tone) {
+      setSelectedTone(currentAgent.tone)
+    }
+  }, [currentAgent])
 
   if (!currentAgent) {
     return (
@@ -58,7 +86,7 @@ export default function TonePage() {
   const handleSave = async () => {
     if (saving) return
     setSaving(true)
-    
+
     try {
       await updateAgent(currentAgent.id, { tone: selectedTone })
       toast.success("Tone gemt!")
@@ -81,78 +109,90 @@ export default function TonePage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-          {toneOptions.map((tone) => (
-            <Card
-              key={tone}
-              className={cn(
-                "cursor-pointer transition-all",
-                selectedTone === tone 
-                  ? "border-primary bg-primary/5 ring-2 ring-primary/10" 
-                  : "hover:border-primary/30"
-              )}
-              onClick={() => setSelectedTone(tone)}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={cn(
-                    "flex size-10 items-center justify-center rounded-xl",
-                    selectedTone === tone ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
-                  )}>
-                    <span className="text-lg">
-                      {tone === "friendly" && "😊"}
-                      {tone === "professional" && "👔"}
-                      {tone === "direct" && "⚡"}
-                      {tone === "educational" && "📚"}
-                    </span>
-                  </div>
-                  {selectedTone === tone && (
-                    <div className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <HugeiconsIcon icon={Tick02Icon} size={14} />
-                    </div>
+      <div className="space-y-6">
+        {/* Tone selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Kommunikationsstil</CardTitle>
+            <CardDescription>
+              Vælg den tone der passer bedst til dit brand
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {toneOptions.map((tone) => (
+                <button
+                  key={tone.id}
+                  type="button"
+                  onClick={() => setSelectedTone(tone.id)}
+                  className={cn(
+                    "group flex flex-col items-start gap-3 rounded-xl border-2 p-4 text-left transition-all hover:border-primary/50 hover:bg-muted/50",
+                    selectedTone === tone.id
+                      ? "border-primary bg-primary/5"
+                      : "border-transparent bg-muted/30"
                   )}
-                </div>
-                <h3 className="font-semibold mb-1">{toneLabels[tone]}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{toneDescriptions[tone]}</p>
-                <div className="rounded-lg bg-muted/50 p-3">
-                  <p className="text-sm italic text-muted-foreground">
-                    {toneExamples[tone]}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-      </div>
-
-      <Card className="border-dashed bg-muted/30">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div>
-                <p className="font-semibold">Live preview</p>
-                <p className="text-sm text-muted-foreground">Sådan vil {currentAgent.agent_name} svare</p>
-              </div>
+                >
+                  <div className="flex w-full items-start justify-between">
+                    <div
+                      className={cn(
+                        "flex size-12 items-center justify-center rounded-xl transition-colors",
+                        selectedTone === tone.id
+                          ? "bg-primary text-white"
+                          : "bg-muted text-muted-foreground group-hover:text-foreground"
+                      )}
+                    >
+                      <span className="text-xl">{tone.emoji}</span>
+                    </div>
+                    {selectedTone === tone.id && (
+                      <div className="flex size-6 items-center justify-center rounded-full bg-primary text-white">
+                        <HugeiconsIcon icon={Tick02Icon} size={14} />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{tone.label}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {tone.description}
+                    </p>
+                  </div>
+                  <div className="w-full rounded-lg bg-background border px-3 py-2">
+                    <p className="text-sm italic text-muted-foreground">
+                      "{tone.example}"
+                    </p>
+                  </div>
+                </button>
+              ))}
             </div>
-            <div className="rounded-xl border bg-background p-4">
-              <div className="space-y-3">
+          </CardContent>
+        </Card>
+
+        {/* Live preview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Live preview</CardTitle>
+            <CardDescription>
+              Sådan vil {currentAgent.agent_name} svare på et spørgsmål
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <div className="space-y-4">
+                {/* User message */}
                 <div className="flex items-start gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-muted text-sm">👤</div>
-                  <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm">
+                    👤
+                  </div>
+                  <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-2.5">
                     <p className="text-sm">Hvornår åbner I?</p>
                   </div>
                 </div>
+                {/* Agent response */}
                 <div className="flex items-start gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm">🤖</div>
-                  <div className="rounded-2xl rounded-tl-sm bg-primary/10 px-4 py-2 max-w-[80%]">
-                    <p className="text-sm">
-                      {selectedTone === "friendly" &&
-                        `Hej! 😊 Vi har åbent mandag til fredag kl. 9-17. Er der andet jeg kan hjælpe med?`}
-                      {selectedTone === "professional" &&
-                        `Vores åbningstider er mandag-fredag kl. 9:00-17:00. Du er velkommen til at kontakte os inden for disse tider.`}
-                      {selectedTone === "direct" &&
-                        `Man-fre, 9-17.`}
-                      {selectedTone === "educational" &&
-                        `Vi har åbent i hverdagene fra kl. 9 til 17. Det betyder at du kan nå os alle arbejdsdage. I weekenden er vi desværre lukket, men du kan skrive til os her, så svarer vi mandag morgen.`}
-                    </p>
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-white text-sm">
+                    🤖
+                  </div>
+                  <div className="rounded-2xl rounded-tl-sm bg-background border px-4 py-2.5 max-w-[85%]">
+                    <p className="text-sm">{previewResponses[selectedTone]}</p>
                   </div>
                 </div>
               </div>
@@ -160,7 +200,7 @@ export default function TonePage() {
           </CardContent>
         </Card>
 
-      <Button onClick={handleSave} disabled={saving} size="lg">
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? (
             <>
               <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
@@ -170,6 +210,7 @@ export default function TonePage() {
             "Gem ændringer"
           )}
         </Button>
+      </div>
     </div>
   )
 }

@@ -57,7 +57,7 @@ export default function LinksPage() {
 
   const addLink = async () => {
     if (!newLabel.trim() || !newUrl.trim() || saving) return
-    
+
     setSaving(true)
     try {
       const res = await fetch(`/api/agents/${currentAgent.id}/knowledge/links`, {
@@ -114,57 +114,57 @@ export default function LinksPage() {
       </div>
 
       <div>
-        <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <HugeiconsIcon icon={Add01Icon} size={20} />
+        <Card className="border">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
+                <HugeiconsIcon icon={Add01Icon} size={20} className="text-muted-foreground" />
+              </div>
+              <div>
+                <p className="font-semibold">Tilføj nyt link</p>
+                <p className="text-sm text-muted-foreground">Angiv et navn og URL</p>
+              </div>
             </div>
-            <div>
-              <p className="font-semibold">Tilføj nyt link</p>
-              <p className="text-sm text-muted-foreground">Angiv et navn og URL</p>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="link-label">Navn</Label>
+                <Input
+                  id="link-label"
+                  className="bg-background"
+                  placeholder="F.eks. FAQ eller Prisliste"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="link-url">URL</Label>
+                <Input
+                  id="link-url"
+                  className="bg-background"
+                  placeholder="https://..."
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={addLink}
+                  disabled={!newLabel.trim() || !newUrl.trim() || saving}
+                  size="lg"
+                >
+                  {saving ? (
+                    <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
+                  )}
+                  Tilføj
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="link-label">Navn</Label>
-              <Input
-                id="link-label"
-                className="bg-background"
-                placeholder="F.eks. FAQ eller Prisliste"
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                disabled={saving}
-              />
-            </div>
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="link-url">URL</Label>
-              <Input
-                id="link-url"
-                className="bg-background"
-                placeholder="https://..."
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                disabled={saving}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                onClick={addLink}
-                disabled={!newLabel.trim() || !newUrl.trim() || saving}
-                size="lg"
-              >
-                {saving ? (
-                  <HugeiconsIcon icon={Loading03Icon} size={16} className="mr-2 animate-spin" />
-                ) : (
-                  <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
-                )}
-                Tilføj
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       </div>
 
       <div>

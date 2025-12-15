@@ -100,15 +100,15 @@ export default function DocumentsPage() {
     try {
       // Start progress animation
       setUploadStep("uploading")
-      
+
       // Brug server action til upload og AI-opsummering
       const formData = new FormData()
       formData.append("file", file)
-      
+
       // Simuler progress trin (server action kører som én operation)
       setTimeout(() => setUploadStep("extracting"), 500)
       setTimeout(() => setUploadStep("summarizing"), 1500)
-      
+
       const result = await uploadDocument(currentAgent.id, formData)
 
       if (result.error) {
@@ -198,7 +198,7 @@ export default function DocumentsPage() {
       </div>
 
       <div>
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border">
           <CardContent className="p-6">
             <input
               ref={fileInputRef}
@@ -209,9 +209,9 @@ export default function DocumentsPage() {
               disabled={uploading}
             />
             {uploading ? (
-              <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-primary/30 bg-background p-8">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                  <HugeiconsIcon icon={Loading03Icon} size={28} className="animate-spin" />
+              <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-border bg-muted/30 p-8">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+                  <HugeiconsIcon icon={Loading03Icon} size={28} className="animate-spin text-muted-foreground" />
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-lg">
@@ -230,11 +230,10 @@ export default function DocumentsPage() {
               </div>
             ) : (
               <div
-                className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer ${
-                  isDragging
-                    ? "border-primary bg-primary/10"
-                    : "border-primary/30 bg-background hover:border-primary/50"
-                }`}
+                className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer ${isDragging
+                  ? "border-foreground/50 bg-muted/50"
+                  : "border-border hover:border-foreground/30 hover:bg-muted/30"
+                  }`}
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -248,8 +247,8 @@ export default function DocumentsPage() {
                   }
                 }}
               >
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                  <HugeiconsIcon icon={Upload01Icon} size={28} />
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+                  <HugeiconsIcon icon={Upload01Icon} size={28} className="text-muted-foreground" />
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-lg">Upload dokumenter</p>

@@ -46,6 +46,15 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type Props = React.ComponentProps<typeof Sidebar> & {
   user: User
@@ -54,6 +63,8 @@ type Props = React.ComponentProps<typeof Sidebar> & {
 export function AppSidebar({ user, ...props }: Props) {
   const pathname = usePathname()
   const { agents, currentAgent, setCurrentAgent } = useAgent()
+  const [comingSoonOpen, setComingSoonOpen] = React.useState(false)
+  const [comingSoonTitle, setComingSoonTitle] = React.useState("")
 
   const overviewItems = [
     {
@@ -237,11 +248,15 @@ export function AppSidebar({ user, ...props }: Props) {
             <SidebarMenu>
               {supportItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <Link href={item.url}>
-                      <HugeiconsIcon icon={item.icon} size={18} />
-                      <span>{item.title}</span>
-                    </Link>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    onClick={() => {
+                      setComingSoonTitle(item.title)
+                      setComingSoonOpen(true)
+                    }}
+                  >
+                    <HugeiconsIcon icon={item.icon} size={18} />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -250,8 +265,29 @@ export function AppSidebar({ user, ...props }: Props) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} />
+        <NavUser
+          user={userData}
+          onComingSoon={(title) => {
+            setComingSoonTitle(title)
+            setComingSoonOpen(true)
+          }}
+        />
       </SidebarFooter>
+
+      {/* Coming Soon Dialog */}
+      <AlertDialog open={comingSoonOpen} onOpenChange={setComingSoonOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{comingSoonTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Denne side eksisterer ikke i dette studieprojekt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Okay</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sidebar>
   )
 }

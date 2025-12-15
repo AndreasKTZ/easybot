@@ -172,11 +172,11 @@ export default function CustomPage() {
 
       {/* Add new entry form */}
       <div>
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <HugeiconsIcon icon={Add01Icon} size={20} />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
+                <HugeiconsIcon icon={Add01Icon} size={20} className="text-muted-foreground" />
               </div>
               <div>
                 <p className="font-semibold">Tilføj ny information</p>

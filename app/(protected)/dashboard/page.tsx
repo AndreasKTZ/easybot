@@ -55,9 +55,9 @@ export default function DashboardPage() {
     })
   }, [])
 
-  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || 
-                    user?.email?.split("@")[0] || 
-                    "der"
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "der"
 
   if (loading) {
     return (
@@ -115,8 +115,8 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="flex min-h-full">
-      {/* Left side - Main content (65%) */}
+    <div className="flex flex-col lg:flex-row min-h-full">
+      {/* Left side - Main content */}
       <div className="flex-1 p-6 lg:p-8">
         {/* Welcome header */}
         <div className="mb-8">
@@ -191,10 +191,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Right side - Testing zone (35%) */}
-      <div className="hidden lg:flex lg:w-[460px] xl:w-[500px] flex-col border-l border-border bg-sidebar">
+      {/* Testing zone - right side on desktop, bottom on mobile */}
+      <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-border bg-sidebar lg:w-[460px] xl:w-[500px]">
         {/* Testing zone header */}
-        <div className="flex items-center gap-3 p-5 border-b border-dashed border-border">
+        <div className="flex items-center gap-3 p-4 lg:p-5 border-b border-dashed border-border">
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <HugeiconsIcon icon={TestTube01Icon} size={20} />
           </div>
@@ -205,7 +205,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Chat widget */}
-        <div className="flex-1 flex flex-col min-h-0 p-4">
+        <div className="h-[500px] lg:flex-1 lg:h-auto flex flex-col min-h-0 p-4">
           <Card className="flex flex-1 flex-col overflow-hidden py-0 shadow-lg border-none">
             <CardContent className="flex min-h-0 flex-1 flex-col p-0">
               <ChatWidget
@@ -216,15 +216,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Mobile: Show chat in a card below */}
-      <div className="lg:hidden fixed bottom-4 right-4 z-50">
-        <Button size="lg" className="rounded-full shadow-lg h-14 w-14" asChild>
-          <Link href={`/widget/chat?agent=${currentAgent.id}`}>
-            <HugeiconsIcon icon={AiBrain01Icon} size={24} />
-          </Link>
-        </Button>
       </div>
     </div>
   )
