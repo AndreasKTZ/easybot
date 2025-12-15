@@ -55,7 +55,7 @@ export function AgentSwitcher({
                     </span>
                   </>
                 ) : (
-                  <span className="font-semibold text-muted-foreground">
+                  <span className="font-semibold opacity-80">
                     Vælg agent
                   </span>
                 )}
