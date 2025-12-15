@@ -82,6 +82,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=din-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=din-supabase-service-role-key
 GOOGLE_GENERATIVE_AI_API_KEY=din-google-ai-api-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+HUGEICONS_AUTH_TOKEN=din-hugeicons-license
 ```
 
 **Hvor finder du disse nøgler:**
